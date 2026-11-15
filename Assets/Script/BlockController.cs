@@ -14,7 +14,7 @@ public class BlockController : MonoBehaviour
     public BirdSpawner birdSpawner;
     public BirdController bird;
     public bool isFalling = false;
-    private Vector3Int gridPos;
+
     [Header("Grid")] 
     public Grid _grid;
     public BlockArea _blockArea;
@@ -35,7 +35,6 @@ public class BlockController : MonoBehaviour
         bird = GetComponentInParent<BirdController>();
         _blockData = bird.Blocktmp;
     }
-    
 
     // Update is called once per frame
     void Update()
@@ -46,16 +45,10 @@ public class BlockController : MonoBehaviour
             )
         {
             Debug.Log("chay PlaceBlock!!!!!!!!!!!!!!!!!!");
+            //_rigidbody2D.bodyType = RigidbodyType2D.Static;
             PlaceBlock();
             isFalling = false;
         }
-        /*
-        if (HasBlockBelow((Vector2Int)gridPos) == false)
-        {
-            Debug.Log("HasBlockBelow = false");
-            Fall();
-        }
-        */
     }
 
     public void GoDown()
@@ -98,14 +91,12 @@ public class BlockController : MonoBehaviour
         {
             //Debug.Log("Dung vao BlockArea !!!!!!! @@@@@@@@@@@@@@@");
             BirdSpawn();
-            _rigidbody2D.bodyType = RigidbodyType2D.Static;
             return;
         }
         
         else if (other.gameObject.CompareTag("Block"))
         {
             BirdSpawn();
-            _rigidbody2D.bodyType = RigidbodyType2D.Static;
         }    
     }
     
@@ -129,44 +120,17 @@ public class BlockController : MonoBehaviour
 
     void PlaceBlock()
     {
-        _rigidbody2D.linearVelocity = Vector2.zero;
         _rigidbody2D.bodyType = RigidbodyType2D.Static;
-
-        gridPos = _grid.WorldToCell(transform.position);
-
-        isFalling = false;
-
+        _rigidbody2D.linearVelocity = new Vector2(0, -1 * speed);
+        //doi tu world position thanh grid position
+        Vector3Int gridPos = _grid.WorldToCell(transform.position);
+        //Debug.Log("_rigidbody2D.linearVelocity.y = " + _rigidbody2D.linearVelocity.y + " !!!!!!!!!!!!!!!!!!");
+        Debug.Log("gridPos: x = " + gridPos.x + ", y = " + gridPos.y + " !!!!!!!!!");
+        //Debug.Log("goi AddBlock@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
         _blockArea.AddBlock((Vector2Int)gridPos, this);
+        //Debug.Log("kich thuoc cua blockList: " + _blockArea.blockList.Count);
+       
     }
 
-    public void Fall()
-    {
-        //block roi xuong
-        if (isFalling) return;
-        _rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
-        _rigidbody2D.gravityScale = 1f;
-        isFalling = true;
-    }
-
-    public bool HasBlockBelow(Vector2Int currentPos)
-    {
-        Vector2Int blockBelow = currentPos + Vector2Int.down * 2;
-        //neu dang duoc con chim cam thi ko roi
-        if (transform.parent != null)
-            return true;
-        //neu dang o duoi day cua BlockArea thi se ko bi roi
-        if (Mathf.Approximately(currentPos.y, -12))
-        {
-            Debug.Log("vat dang o duoi day!!!!!!!!!!!!!!");
-            return true;
-        }
-        //neu co block o duoi thi ko bi roi
-        if (_blockArea.blockList.ContainsKey(blockBelow) == true)
-        {
-            Debug.Log("co block ben duoi!!!!!!!!!!!!!!");
-            return true;
-        }
-        
-        return false;
-    }
+   
 }

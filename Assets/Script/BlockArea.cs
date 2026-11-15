@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.VisualScripting;
@@ -10,6 +9,7 @@ public class BlockArea : MonoBehaviour
     public Dictionary<Vector2Int, BlockController> blockList = new Dictionary<Vector2Int, BlockController>();
     private Dictionary<Vector2Int, bool> visited;
     public GameObject blockMatched;
+
     
     public void AddBlock(Vector2Int gridPos, BlockController block)
     {
@@ -50,10 +50,11 @@ public class BlockArea : MonoBehaviour
         //Debug.Lo_blockAreag("kiem tra " + startPos);
         visited[startPos] = true;
         Check(startPos, ref result, target);
-        Debug.Log("ben trai " + startPos + " la: " + blockList.ContainsKey(startPos + Vector2Int.left*2));
-        Debug.Log("ben phai "  + startPos + " la: " + blockList.ContainsKey(startPos + Vector2Int.right*2));
-        Debug.Log("ben tren  "  + startPos + " la: " + blockList.ContainsKey(startPos + Vector2Int.up*2));
-        Debug.Log("ben duoi  "  + startPos + " la: "+ blockList.ContainsKey(startPos + Vector2Int.down*2));
+        //Debug.Log("ben trai no la: " + blockList.ContainsKey(startPos + Vector2Int.left*2));
+        //Debug.Log("ben phai no la: " + blockList.ContainsKey(startPos + Vector2Int.right*2));
+        //Debug.Log("ben tren no la: " + blockList.ContainsKey(startPos + Vector2Int.up*2));
+        //Debug.Log("ben duoi no la: " + blockList.ContainsKey(startPos + Vector2Int.down*2));
+
         if (blockList.ContainsKey(startPos + Vector2Int.left*2) == true && 
             visited.ContainsKey(startPos + Vector2Int.left*2) == false)
         {
@@ -84,23 +85,21 @@ public class BlockArea : MonoBehaviour
     {
         visited = new Dictionary<Vector2Int, bool>();
         Dictionary<BlockController, Vector2Int> result = new Dictionary<BlockController, Vector2Int>();
+
         string target = blockList[gridPos]._blockData.name;
-        Debug.Log("xet target: " + target);
         DFS(ref visited, gridPos, ref result, target);
         visited.Clear();
         return result;
     }
 
-    void Check(Vector2Int pos, ref Dictionary<BlockController, Vector2Int> result, 
-        string target)
+    void Check(Vector2Int pos, ref Dictionary<BlockController, Vector2Int> result, string target)
     {
-        /*
         Debug.Log("blockList: ");
         foreach (var item in blockList)
         {
             //Debug.Log(item);
         }
-*/
+
         BlockData blockData = blockList[pos]._blockData;
         
         if (blockData.name == target)
@@ -108,36 +107,6 @@ public class BlockArea : MonoBehaviour
             result.Add(blockList[pos], pos);
             //Debug.Log("them " + pos + " vao result");
         }
-    }
-    public void CheckUnsupportedBlocks()
-    {
-        var blocks = new List<KeyValuePair<Vector2Int, BlockController>>(blockList);
-
-        // Check lower blocks first.
-        blocks.Sort((a, b) => a.Key.y.CompareTo(b.Key.y));
-
-        foreach (var item in blocks)
-        {
-            Vector2Int pos = item.Key;
-            BlockController block = item.Value;
-
-            if (block == null) continue;
-
-            if (!block.HasBlockBelow(pos))
-            {
-                // Remove its old position before it falls.
-                blockList.Remove(pos);
-                block.Fall();
-            }
-        }
-    }
-
-    IEnumerator CheckAfterRemoval()
-    {
-        //cho den khi block bien mat het
-        yield return new WaitForSeconds(0.4f);
-        yield return new WaitForFixedUpdate();
-        CheckUnsupportedBlocks();
     }
 
     void RemoveBlock(Dictionary<BlockController, Vector2Int>result)
@@ -151,7 +120,6 @@ public class BlockArea : MonoBehaviour
             blockList.Remove(item.Value);
         }
         result.Clear();
-        StartCoroutine(CheckAfterRemoval());
         Debug.Log("clear result. Result = " + result.Count);
     }
 }
