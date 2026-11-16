@@ -44,6 +44,26 @@ public class BlockArea : MonoBehaviour
     }
     //tham chieu, tham tri
     
+    
+    bool CanVisit(
+        Vector2Int pos,
+        Dictionary<Vector2Int, bool> visited,
+        string target)
+    {
+        //vi tri nay da duoc visit chua
+        if (visited.ContainsKey(pos))
+            return false;
+        //o nay co chua block ko
+        if (!blockList.TryGetValue(pos, out BlockController block))
+            return false;
+        //kiem tra null
+        if (block == null || block._blockData == null)
+            return false;
+        //neu giong target thi tra ve true
+        return block._blockData.name == target;
+    }
+
+    
     void DFS(ref Dictionary<Vector2Int, bool> visited, Vector2Int startPos, 
         ref Dictionary<BlockController, Vector2Int> result, string target)
     {
@@ -54,13 +74,36 @@ public class BlockArea : MonoBehaviour
         //Debug.Log("ben phai no la: " + blockList.ContainsKey(startPos + Vector2Int.right*2));
         //Debug.Log("ben tren no la: " + blockList.ContainsKey(startPos + Vector2Int.up*2));
         //Debug.Log("ben duoi no la: " + blockList.ContainsKey(startPos + Vector2Int.down*2));
-
-        if (blockList.ContainsKey(startPos + Vector2Int.left*2) == true && 
-            visited.ContainsKey(startPos + Vector2Int.left*2) == false)
-        {
-            DFS(ref visited, startPos + Vector2Int.left*2, ref result, target);
-        }
+        //trai
+        Vector2Int left = startPos + Vector2Int.left * 2;
         
+        if (CanVisit(left, visited, target))
+        {
+            DFS(ref visited, left, ref result, target);
+        }
+        //phai
+        Vector2Int right = startPos + Vector2Int.right * 2;
+
+        if (CanVisit(right, visited, target))
+        {
+            DFS(ref visited, right, ref result, target);
+        }
+        //tren
+        Vector2Int up = startPos + Vector2Int.up * 2;
+
+        if (CanVisit(up, visited, target))
+        {
+            DFS(ref visited, up, ref result, target);
+        }
+        //duoi
+        Vector2Int down = startPos + Vector2Int.down * 2;
+
+        if (CanVisit(down, visited, target))
+        {
+            DFS(ref visited, down, ref result, target);
+        }
+
+        /*
         if (blockList.ContainsKey(startPos + Vector2Int.right*2) == true && 
             visited.ContainsKey(startPos + Vector2Int.right*2) == false)
         {
@@ -79,6 +122,7 @@ public class BlockArea : MonoBehaviour
             Debug.Log("di xuong ben duoi !!!!!!!!!!!!!!!!!!!!!!!!!!");
             DFS(ref visited, startPos + Vector2Int.down*2, ref result, target);
         }
+        */
     }
     
     Dictionary<BlockController, Vector2Int> FindConnectedBlock(Vector2Int gridPos)
