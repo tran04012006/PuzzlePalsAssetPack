@@ -13,9 +13,9 @@ public class BlockArea : MonoBehaviour
     
     public void AddBlock(Vector2Int gridPos, BlockController block)
     {
-        Debug.Log("So luong ptu truoc khi add trong blockList: " + blockList.Count);
+        //Debug.Log("So luong ptu truoc khi add trong blockList: " + blockList.Count);
         blockList[gridPos] = block;
-        Debug.Log("So luong ptu sau khi add trong blockList: " + blockList.Count);
+        //Debug.Log("So luong ptu sau khi add trong blockList: " + blockList.Count);
         
         CheckMatch(gridPos);
     }
@@ -70,10 +70,6 @@ public class BlockArea : MonoBehaviour
         //Debug.Lo_blockAreag("kiem tra " + startPos);
         visited[startPos] = true;
         Check(startPos, ref result, target);
-        //Debug.Log("ben trai no la: " + blockList.ContainsKey(startPos + Vector2Int.left*2));
-        //Debug.Log("ben phai no la: " + blockList.ContainsKey(startPos + Vector2Int.right*2));
-        //Debug.Log("ben tren no la: " + blockList.ContainsKey(startPos + Vector2Int.up*2));
-        //Debug.Log("ben duoi no la: " + blockList.ContainsKey(startPos + Vector2Int.down*2));
         //trai
         Vector2Int left = startPos + Vector2Int.left * 2;
         
@@ -102,27 +98,6 @@ public class BlockArea : MonoBehaviour
         {
             DFS(ref visited, down, ref result, target);
         }
-
-        /*
-        if (blockList.ContainsKey(startPos + Vector2Int.right*2) == true && 
-            visited.ContainsKey(startPos + Vector2Int.right*2) == false)
-        {
-            DFS(ref visited, startPos + Vector2Int.right*2, ref result, target);
-        }
-        
-        if (blockList.ContainsKey(startPos + Vector2Int.up*2) == true && 
-            visited.ContainsKey(startPos + Vector2Int.up*2) == false)
-        {
-            DFS(ref visited, startPos + Vector2Int.up*2, ref result, target);
-        }
-        
-        if (blockList.ContainsKey(startPos + Vector2Int.down*2) == true && 
-            visited.ContainsKey(startPos + Vector2Int.down*2) == false)
-        {
-            Debug.Log("di xuong ben duoi !!!!!!!!!!!!!!!!!!!!!!!!!!");
-            DFS(ref visited, startPos + Vector2Int.down*2, ref result, target);
-        }
-        */
     }
     
     Dictionary<BlockController, Vector2Int> FindConnectedBlock(Vector2Int gridPos)
@@ -153,18 +128,48 @@ public class BlockArea : MonoBehaviour
         }
     }
 
+
+    void CheckUnsupportedBlocks()
+    {
+        //duyet qua cac phan tu trong blockList
+        var blocks = new List<KeyValuePair<Vector2Int, BlockController>>(blockList);
+        //sap xep theo toa do y giam dan
+        blocks.Sort((a, b) => a.Key.y.CompareTo(b.Key.y));
+        foreach (var item in blocks)
+        {
+            Vector2Int pos = item.Key;
+            BlockController block = item.Value;
+            
+            if (block == null)
+                continue;
+
+            if (!block.HasBlockBelow(pos))
+            {
+                // Cho block rơi
+                block.Fall();
+            }
+        }
+    }
+
     void RemoveBlock(Dictionary<BlockController, Vector2Int>result)
     {
+        //xoa cac block da du > 4 cuc
         foreach (var item in result)
         {
             //Debug.Log("goi " + item.Value);
+            blockList.Remove(item.Value); //xoa khoi blocklist
+            BlockController block = item.Key;
             GameObject blockMatchedTmp = Instantiate(blockMatched, item.Key.transform.position, Quaternion.identity);
-            Destroy(item.Key.gameObject, 0.4f);
+            block.disappear = true; //danh dau la da bien mat
+            block.GetComponent<Collider2D>().enabled = false; //lam mat collider
+            Destroy(block.gameObject, 0.4f);
             Destroy(blockMatchedTmp, 0.5f);
             blockList.Remove(item.Value);
         }
         result.Clear();
         Debug.Log("clear result. Result = " + result.Count);
+        //kiem tra xem sau khi xoa roi thi ben duoi con block ko
+        CheckUnsupportedBlocks(); //di kiem tra cac block khac, xem co cai nao can roi xuong ko
     }
 }
 
