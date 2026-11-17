@@ -22,10 +22,16 @@ public class BirdController : MonoBehaviour
     private int currentIndexBlock;
     private GameObject currentBlock;
     public BlockData Blocktmp;
+    public bool leftArea = true;
 
     private void OnEnable()
     {
-        blocky = GameObject.FindGameObjectWithTag("Player");
+        if (leftArea == true)
+            blocky = GameObject.FindGameObjectWithTag("Player");
+        else
+        {
+            blocky = GameObject.FindGameObjectWithTag("PlayerRight");
+        }
         blockyController = blocky.GetComponent<BlockyController>();
         
         blockyController.ReceiveBlockAction += FlyUp;
@@ -44,8 +50,17 @@ public class BirdController : MonoBehaviour
     {
         //x: -25,29 -> -6,41
         //y: 15.56
-        startPos.x = Random.Range(-25.29f, -6.41f);
-        startPos.y = 15.56f;
+        if (leftArea == true)
+        {
+            startPos.x = Random.Range(-25.29f, -6.41f);
+            startPos.y = 15.56f;
+        }
+        else
+        {
+            startPos.x = Random.Range(12.1f, 28.2f);
+            startPos.y = 15.56f;
+        }
+
         transform.position = startPos;
 
         _rigidbody2D = GetComponent<Rigidbody2D>();

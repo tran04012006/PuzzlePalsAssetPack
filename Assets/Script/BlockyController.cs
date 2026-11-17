@@ -40,8 +40,10 @@ public class BlockyController : MonoBehaviour
     public GameObject receiveBlock;
     public Transform holdBlockPos;
     //public GameObject bird;
-    
-    
+    [Header("Control")] public KeyCode leftKey = KeyCode.A;
+    public KeyCode rightKey = KeyCode.D;
+    public KeyCode receiveKey = KeyCode.W;
+    public KeyCode throwKey = KeyCode.S;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -96,10 +98,10 @@ public class BlockyController : MonoBehaviour
 
     public void Movement()
     {
-        if (Input.GetKeyDown(KeyCode.A))
+        if (Input.GetKeyDown(leftKey))
             direction = Vector2.left;
 
-        if (Input.GetKeyDown(KeyCode.D))
+        if (Input.GetKeyDown(rightKey))
             direction = Vector2.right;
         
         Debug.Log("Movement!!!!!!!!!!!");
@@ -109,8 +111,27 @@ public class BlockyController : MonoBehaviour
 
     void Direction()
     {
-        moveX = Input.GetAxisRaw("Horizontal");
-        moveY = Input.GetAxisRaw("Vertical");
+        //gia tri moveX
+        moveX = 0f;
+        if (Input.GetKeyDown(leftKey))
+        {
+            moveX = -1f;
+        }
+        else if (Input.GetKeyDown(rightKey))
+        {
+            moveX = 1f;
+        }
+        //gia tri moveY
+        moveY = 0f;
+        if (Input.GetKeyDown(receiveKey))
+        {
+            moveY = 1f;
+        }
+        if (Input.GetKeyDown(throwKey))
+        {
+            moveY = -1f;
+        }
+        //quyet dinh sprite
         if (moveX == 1)
         {
             //di sang phai

@@ -169,7 +169,7 @@ public class BlockController : MonoBehaviour
         //Debug.Log("_rigidbody2D.linearVelocity.y = " + _rigidbody2D.linearVelocity.y + " !!!!!!!!!!!!!!!!!!");
         Debug.Log("gridPos: x = " + gridPos.x + ", y = " + gridPos.y + " !!!!!!!!!");
         //Debug.Log("goi AddBlock@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        if (_blockArea.blockList.ContainsKey((Vector2Int)gridPos))
+        while (_blockArea.blockList.ContainsKey((Vector2Int)gridPos))
         {
             Debug.Log("da co !!!!!!!!! " + gridPos);
             _blockArea.blockList.Remove((Vector2Int)gridPos);

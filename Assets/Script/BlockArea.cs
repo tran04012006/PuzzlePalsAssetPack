@@ -13,6 +13,11 @@ public class BlockArea : MonoBehaviour
     
     public void AddBlock(Vector2Int gridPos, BlockController block)
     {
+        while (blockList.ContainsKey(gridPos))
+        {
+            Debug.Log("da co !!!!!!!!! " + gridPos);
+            blockList.Remove(gridPos);
+        }
         //Debug.Log("So luong ptu truoc khi add trong blockList: " + blockList.Count);
         blockList[gridPos] = block;
         //Debug.Log("So luong ptu sau khi add trong blockList: " + blockList.Count);
