@@ -180,9 +180,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockController
   _blockData: {fileID: 0}
-  birdSpawner: {fileID: 3179049875302961663, guid: 76f6278917957b54296d9e5823bff306, type: 3}
+  birdSpawner: {fileID: 780811040013553628, guid: 84dade847fdf97646a7ad83c791429b4, type: 3}
   bird: {fileID: 0}
   isFalling: 0
   _grid: {fileID: 9160741650404910900, guid: 32831fc8309b841458f3416d596ff753, type: 3}
   _blockArea: {fileID: 719212043082379897, guid: 6a958580d4a1a0e4b8d8b2574d153f1e, type: 3}
   speed: 10
+  disappear: 0

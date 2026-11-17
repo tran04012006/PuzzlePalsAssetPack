@@ -8,7 +8,15 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 2335628284887839144, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: birdSpawner
+      value: 
+      objectReference: {fileID: 3179049875302961663, guid: 76f6278917957b54296d9e5823bff306, type: 3}
     - target: {fileID: 4057559126204115513, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: m_Name
+      value: Block
+      objectReference: {fileID: 0}
+    - target: {fileID: 6908323733513965365, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: m_Name
       value: Block
       objectReference: {fileID: 0}

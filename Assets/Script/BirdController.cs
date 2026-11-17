@@ -57,7 +57,7 @@ public class BirdController : MonoBehaviour
         }
         else
         {
-            startPos.x = Random.Range(12.1f, 28.2f);
+            startPos.x = Random.Range(6f, 24f);
             startPos.y = 15.56f;
         }
 

@@ -9,6 +9,7 @@ TagManager:
   - PlayerArea
   - Bird
   - FxTemporaire
+  - PlayerRight
   layers:
   - Default
   - TransparentFX

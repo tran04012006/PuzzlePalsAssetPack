@@ -209,11 +209,12 @@ MonoBehaviour:
   blocky: {fileID: 0}
   lifeTime: 1
   blockDataArray:
-  - {fileID: 11400000, guid: 9a48cbb90bb7487458bedf24a75fa82a, type: 2}
-  - {fileID: 11400000, guid: ec6ed980b66f8314e9b0bb6b611d23a1, type: 2}
-  - {fileID: 11400000, guid: 730bae3efdf37f6499a9536cf90f0118, type: 2}
-  - {fileID: 11400000, guid: 43c54c59d96001848916593c9082571d, type: 2}
+  - {fileID: 11400000, guid: 91303268eaf145944a366b2b88b24c66, type: 2}
+  - {fileID: 11400000, guid: c162a0660d1ddee4996ee055dfcb4429, type: 2}
+  - {fileID: 11400000, guid: 62e6fb400158ef14ab6290e5d51e44af, type: 2}
+  - {fileID: 11400000, guid: c1286e05330d1134ab59ebdf3459c0a4, type: 2}
   Blocktmp: {fileID: 0}
+  leftArea: 0
 --- !u!1 &7016352979421379165
 GameObject:
   m_ObjectHideFlags: 0

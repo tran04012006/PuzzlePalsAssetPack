@@ -65593,13 +65593,45 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1346017255591888898, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: birdSpawner
+      value: 
+      objectReference: {fileID: 780811040013553628, guid: 84dade847fdf97646a7ad83c791429b4, type: 3}
+    - target: {fileID: 4691406817807165344, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: birdPrefab
+      value: 
+      objectReference: {fileID: 3523042125622303493, guid: 519853a8bc592364bbb1ecd3dae03e58, type: 3}
     - target: {fileID: 5103702510815159609, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
       propertyPath: m_Name
       value: PlayerArea_Right
       objectReference: {fileID: 0}
+    - target: {fileID: 5400491137567180934, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: leftArea
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5400491137567180934, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: 'blockDataArray.Array.data[0]'
+      value: 
+      objectReference: {fileID: 11400000, guid: b5f7211d95aa0a54ab2315008dd93ddc, type: 2}
+    - target: {fileID: 5400491137567180934, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: 'blockDataArray.Array.data[1]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 6910a6e098baa3a4ba105f0a50cac1b3, type: 2}
+    - target: {fileID: 5400491137567180934, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: 'blockDataArray.Array.data[2]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 0fbabfb0d6f6ce2499ff6a6eb8691d4c, type: 2}
+    - target: {fileID: 5400491137567180934, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: 'blockDataArray.Array.data[3]'
+      value: 
+      objectReference: {fileID: 11400000, guid: 13956796610a9d74b8919f9c5267a485, type: 2}
+    - target: {fileID: 7764534276151847455, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: m_TagString
+      value: PlayerRight
+      objectReference: {fileID: 0}
     - target: {fileID: 7919232415430064097, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 24.6
+      value: 29.2
       objectReference: {fileID: 0}
     - target: {fileID: 7919232415430064097, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
       propertyPath: m_LocalPosition.y
@@ -65650,9 +65682,13 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: 1793314270393851338, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -18.5
+      objectReference: {fileID: 0}
     - target: {fileID: 4469529553014397715, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.4303
+      value: -1.5
       objectReference: {fileID: 0}
     - target: {fileID: 4469529553014397715, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
       propertyPath: m_LocalPosition.y
@@ -65705,6 +65741,18 @@ PrefabInstance:
     - target: {fileID: 4689968623425988614, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
       propertyPath: m_Name
       value: PlayerArea_Left
+      objectReference: {fileID: 0}
+    - target: {fileID: 5235021454067367176, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
+      propertyPath: birdSpawner
+      value: 
+      objectReference: {fileID: 3179049875302961663, guid: 76f6278917957b54296d9e5823bff306, type: 3}
+    - target: {fileID: 7414687000837394880, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
+      propertyPath: blocky
+      value: 
+      objectReference: {fileID: 7558612197920542878, guid: 173e74cb2c94b794faf0def7bf466828, type: 3}
+    - target: {fileID: 7433433928678627996, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -12.2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
