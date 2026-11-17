@@ -9,6 +9,10 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 2335628284887839144, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: _blockArea
+      value: 
+      objectReference: {fileID: 719212043082379897, guid: 6a958580d4a1a0e4b8d8b2574d153f1e, type: 3}
+    - target: {fileID: 2335628284887839144, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: birdSpawner
       value: 
       objectReference: {fileID: 3179049875302961663, guid: 76f6278917957b54296d9e5823bff306, type: 3}

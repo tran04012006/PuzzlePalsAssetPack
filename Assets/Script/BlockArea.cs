@@ -9,7 +9,9 @@ public class BlockArea : MonoBehaviour
     public Dictionary<Vector2Int, BlockController> blockList = new Dictionary<Vector2Int, BlockController>();
     private Dictionary<Vector2Int, bool> visited;
     public GameObject blockMatched;
-
+    public bool left = true;
+    public ScoreUpdate scoreUpdate;
+    private int score = 0;
     
     public void AddBlock(Vector2Int gridPos, BlockController block)
     {
@@ -37,6 +39,7 @@ public class BlockArea : MonoBehaviour
         if (result.Count >= 4)
         {
             Debug.Log("Da du 4");
+            scoreUpdate.UpdateScore(result.Count);
             RemoveBlock(result);
         }
 

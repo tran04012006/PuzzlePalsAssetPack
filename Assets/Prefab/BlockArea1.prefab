@@ -45,3 +45,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockArea
   blockMatched: {fileID: 210372139113757311, guid: 13ab35861be1f3548a0639e8571193fe, type: 3}
+  left: 0
+  scoreUpdate: {fileID: 3257646476490926231, guid: 8b0d293838ff6cf4e9e7ce1a529068f6, type: 3}

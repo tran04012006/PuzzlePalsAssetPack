@@ -184,6 +184,6 @@ MonoBehaviour:
   bird: {fileID: 0}
   isFalling: 0
   _grid: {fileID: 9160741650404910900, guid: 32831fc8309b841458f3416d596ff753, type: 3}
-  _blockArea: {fileID: 719212043082379897, guid: 6a958580d4a1a0e4b8d8b2574d153f1e, type: 3}
+  _blockArea: {fileID: 6129933210682521403, guid: 4935e6b4318b0314fab5712aa050a8fd, type: 3}
   speed: 10
   disappear: 0

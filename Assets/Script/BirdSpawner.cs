@@ -27,8 +27,8 @@ public class BirdSpawner : MonoBehaviour
             return;
         }
         
-        //Debug.Log("De ra con chim!!!!!!!!!!!@@@@@@@@@@@");
         GameObject birdTmp = Instantiate(birdPrefab, gameObject.transform.position, Quaternion.identity);
+        Debug.Log("De ra con chim " + birdTmp.name);
         birdList.Add(birdTmp);
     }
 }

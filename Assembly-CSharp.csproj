@@ -55,7 +55,9 @@
     <Compile Include="Assets\Script\BlockMatchController.cs" />
     <Compile Include="Assets\Script\BlockController.cs" />
     <Compile Include="Assets\Script\BlockArea.cs" />
+    <Compile Include="Assets\Script\ScoreUpdate.cs" />
     <Compile Include="Assets\PlayerStatePattern\PlayerWalk.cs" />
+    <Compile Include="Assets\Script\GameManager.cs" />
     <Compile Include="Assets\PlayerStatePattern\PlayerIdle.cs" />
     <Compile Include="Assets\Script\BirdController.cs" />
     <Compile Include="Assets\Script\BirdSpawner.cs" />

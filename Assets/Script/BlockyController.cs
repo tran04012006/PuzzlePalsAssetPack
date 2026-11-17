@@ -70,7 +70,7 @@ public class BlockyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Debug.Log("receiveBlock: " + receiveBlock);
+        //Debug.Log("receiveBlock: " + receiveBlock);
 
         Direction();
         Movement();
@@ -104,7 +104,7 @@ public class BlockyController : MonoBehaviour
         if (Input.GetKeyDown(rightKey))
             direction = Vector2.right;
         
-        Debug.Log("Movement!!!!!!!!!!!");
+        //Debug.Log("Movement!!!!!!!!!!!");
         transform.position += (Vector3)(direction * cellSize);
         direction = Vector2.zero;
     }
