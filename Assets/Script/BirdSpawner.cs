@@ -6,6 +6,7 @@ public class BirdSpawner : MonoBehaviour
     public GameObject birdPrefab;
     private List<GameObject> birdList = new List<GameObject>();
     private int maxBird = 1;
+    public BlockArea blockArea;
     
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -28,6 +29,9 @@ public class BirdSpawner : MonoBehaviour
         }
         
         GameObject birdTmp = Instantiate(birdPrefab, gameObject.transform.position, Quaternion.identity);
+        BlockController blockController = birdTmp.GetComponentInChildren<BlockController>();
+        blockController._blockArea = blockArea;
+        blockController.birdSpawner = this;
         Debug.Log("De ra con chim " + birdTmp.name);
         birdList.Add(birdTmp);
     }

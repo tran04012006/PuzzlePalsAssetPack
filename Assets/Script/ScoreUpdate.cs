@@ -10,7 +10,6 @@ public class ScoreUpdate : MonoBehaviour
     private void Awake()
     {
         scoreText = GetComponent<Text>();
-        //scoreText.text = "...";
     }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -21,26 +20,18 @@ public class ScoreUpdate : MonoBehaviour
     {
         //cap nhat
         Debug.Log("cong diem!!");
-        /*
-        if (scoreText.text == null)
-        {
-            Debug.Log("ko thay scoreText.text :(((((((((((((((((");
-            return;
-        }
-        */
-        //Debug.Log("GameManager.Instance.score cu = " + GameManager.Instance.score);
         if (left == true)
         {
             GameManager.Instance.addScore(score,true);
             Debug.Log("cap nhat " + scoreText.name);
             Debug.Log("GameManager.Instance.scoreLeft: " + GameManager.Instance.scoreLeft);
-            scoreText.text = ".....";
+            scoreText.text = "Score: " + GameManager.Instance.scoreLeft;
             Debug.Log("GameManager.Instance.scoreLeft: " + GameManager.Instance.scoreLeft);
         }
         else
         {
             GameManager.Instance.addScore(score,false);
-            //scoreText.text = "Score: " + GameManager.Instance.scoreRight;
+            scoreText.text = "Score: " + GameManager.Instance.scoreRight;
         }
         //Debug.Log("GameManager.Instance.score moi = " + GameManager.Instance.score);
         //Debug.Log("score = " + score);
