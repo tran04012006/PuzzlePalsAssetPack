@@ -28,6 +28,10 @@ public class PlayerReceiveBlockCarryIdle : IPlayerStatePattern
         {
             _blockyController.ChangeState(_blockyController.playerThrow);
         }
+        if (_blockyController.isGameOver == true)
+        {
+            _blockyController.ChangeState(_blockyController.playerVictory);
+        }
     }
 
     public void Exit()

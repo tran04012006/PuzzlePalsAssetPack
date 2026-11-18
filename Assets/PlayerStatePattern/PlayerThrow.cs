@@ -29,6 +29,10 @@ public class PlayerThrow : IPlayerStatePattern
         {
             _blockyController.ChangeState(_blockyController._playerIdle);
         }
+        if (_blockyController.isGameOver == true)
+        {
+            _blockyController.ChangeState(_blockyController.playerVictory);
+        }
     }
 
     public void Exit()

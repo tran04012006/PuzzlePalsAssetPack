@@ -175,6 +175,8 @@ MonoBehaviour:
   rightKey: 100
   receiveKey: 119
   throwKey: 115
+  victoryEffect: {fileID: 7833166379794320276, guid: 27abda42744651d4db263538c31450ed, type: 3}
+  leftArea: 1
 --- !u!50 &4950895996478471772
 Rigidbody2D:
   serializedVersion: 5

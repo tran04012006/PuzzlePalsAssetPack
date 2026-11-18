@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using Unity.VisualScripting.Dependencies.NCalc;
 using Unity.VisualScripting.FullSerializer;
 using UnityEditor;
 using UnityEngine;
@@ -13,8 +14,10 @@ public class GameManager : MonoBehaviour
     public int scoreLeft;
     public int scoreRight;
 
+    public GameObject winEffect;
     //score: diem player dat duoc
     public bool isGameOver = false;
+    public bool leftIsWin;
     private bool scoreAtStart = false;
     
     //khai bao action, bao khi diem thay doi
@@ -42,6 +45,12 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (scoreRight >= 4 || scoreLeft >= 4)
+        {
+            isGameOver = true;
+            return;
+        }
+
     }
 
     public void ReachCheckPoint(int checkPoint)
@@ -87,9 +96,4 @@ public class GameManager : MonoBehaviour
         
     }
     */
-    public void gameOver()
-    {
-        isGameOver = true;
-        //instantiate gameover prefab hoac dung game
-    }
 }

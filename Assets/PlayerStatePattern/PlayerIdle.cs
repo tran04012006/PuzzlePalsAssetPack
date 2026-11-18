@@ -27,7 +27,11 @@ public class PlayerIdle : IPlayerStatePattern
         {
             //do tay len
             _blockyController.ReceiveBlock();
-            
+        }
+
+        if (_blockyController.isGameOver == true)
+        {
+            _blockyController.ChangeState(_blockyController.playerVictory);
         }
     }
 

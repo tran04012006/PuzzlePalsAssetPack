@@ -35,6 +35,7 @@ public class BlockyController : MonoBehaviour
     public PlayerReceiveBlockRun playerReceiveBlockRun;
     public PlayerThrow playerThrow;
     public PlayerReceiveBlockCarryIdle playerReceiveBlockCarryIdle;
+    public PlayerVictory playerVictory;
 
     [Header("Receive block")] 
     public GameObject receiveBlock;
@@ -44,6 +45,12 @@ public class BlockyController : MonoBehaviour
     public KeyCode rightKey = KeyCode.D;
     public KeyCode receiveKey = KeyCode.W;
     public KeyCode throwKey = KeyCode.S;
+
+    [Header("Victory")] public bool isGameOver = false;
+
+    [Header("Effect")] public GameObject victoryEffect;
+
+    public bool leftArea = true;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -61,7 +68,7 @@ public class BlockyController : MonoBehaviour
         playerReceiveBlockRun = new PlayerReceiveBlockRun(this);
         playerThrow = new PlayerThrow(this);
         playerReceiveBlockCarryIdle = new PlayerReceiveBlockCarryIdle(this);
-
+        playerVictory = new PlayerVictory(this);
         ChangeState(_playerIdle);
 
         holdBlockPos = transform.GetChild(0);
@@ -71,7 +78,11 @@ public class BlockyController : MonoBehaviour
     void Update()
     {
         //Debug.Log("receiveBlock: " + receiveBlock);
-
+        if (GameManager.Instance.isGameOver == true)
+        {
+            Win();
+            isGameOver = true;
+        }
         Direction();
         Movement();
         //Debug.Log("currentState: " + currentState);
@@ -174,5 +185,10 @@ public class BlockyController : MonoBehaviour
         {
             ChangeState(playerReceiveBlockCarryIdle);
         }
+    }
+
+    public void Win()
+    {
+        Instantiate(victoryEffect, (Vector2)gameObject.transform.position + new Vector2(0, 5), Quaternion.identity);
     }
 }

@@ -22,7 +22,7 @@ public class BlockController : MonoBehaviour
     public BlockArea _blockArea;
     public float speed = 4f;
     public bool disappear = false;
-
+    
     private void OnEnable()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
@@ -41,6 +41,7 @@ public class BlockController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+
         if (isFallingAfterMatch == true)
         {
             if (hasSupportContact &&
