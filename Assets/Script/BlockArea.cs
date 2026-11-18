@@ -131,7 +131,7 @@ public class BlockArea : MonoBehaviour
         
         if (blockData.name == target)
         {
-            result.Add(blockList[pos], pos);
+            result[blockList[pos]] = pos;
             //Debug.Log("them " + pos + " vao result");
         }
     }
@@ -170,7 +170,7 @@ public class BlockArea : MonoBehaviour
             GameObject blockMatchedTmp = Instantiate(blockMatched, item.Key.transform.position, Quaternion.identity);
             block.disappear = true; //danh dau la da bien mat
             block.GetComponent<Collider2D>().enabled = false; //lam mat collider
-            Destroy(block.gameObject, 0.4f);
+            Destroy(block.gameObject);
             Destroy(blockMatchedTmp, 0.5f);
             blockList.Remove(item.Value);
         }

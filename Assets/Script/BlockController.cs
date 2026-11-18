@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class BlockController : MonoBehaviour
 {
-    private Rigidbody2D _rigidbody2D;
+    public Rigidbody2D _rigidbody2D;
 
     private BoxCollider2D _boxCollider2D;
     
@@ -162,7 +162,7 @@ public class BlockController : MonoBehaviour
 
     void PlaceBlock()
     {
-        _rigidbody2D.bodyType = RigidbodyType2D.Static;
+        //_rigidbody2D.bodyType = RigidbodyType2D.Static;
         //_rigidbody2D.linearVelocity = new Vector2(0, -1 * speed);
         //doi tu world position thanh grid position
         Vector3Int gridPos = _grid.WorldToCell(transform.position);
