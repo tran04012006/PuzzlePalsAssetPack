@@ -8,24 +8,20 @@ public class BirdController : NetworkBehaviour
     public float moveSpeed = 4f;
     public float lifeTime = 4f;
 
-    [Header("Block")]
-    public BlockData[] blockDataArray;
-    public SpriteRenderer carriedBlockRenderer;
+    [Header("Network Block")]
+    public BlockController blockPrefab;
+    public Transform blockHoldPoint;
 
-    public BlockData Blocktmp;
     public bool leftArea = true;
+    public BlockData Blocktmp;
 
     private Rigidbody2D birdRigidbody;
+    private BlockController carriedBlock;
+
     private float startY;
     private float flyingUpTime;
     private bool isFlyingDown;
     private bool isFlyingUp;
-
-    private NetworkVariable<int> blockIndex = new NetworkVariable<int>(
-        -1,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
 
     private void Awake()
     {
@@ -34,31 +30,65 @@ public class BirdController : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        blockIndex.OnValueChanged += HandleBlockChanged;
-
-        // Host mô phỏng chuyển động, Client hiển thị vị trí nhận được.
         birdRigidbody.simulated = IsServer;
 
         if (IsServer)
         {
-            if (blockDataArray == null || blockDataArray.Length == 0)
-            {
-                Debug.LogError("Bird chưa được gán Block Data Array.", this);
-                return;
-            }
-
-            blockIndex.Value = Random.Range(0, blockDataArray.Length);
-
             startY = transform.position.y;
             isFlyingDown = true;
         }
+    }
 
-        ApplyBlock(blockIndex.Value);
+    public void SpawnCarriedBlock(
+        BlockArea area,
+        Grid grid,
+        BirdSpawner spawner)
+    {
+        if (!IsSpawned || !IsServer || carriedBlock != null)
+            return;
+
+        if (blockPrefab == null ||
+            blockHoldPoint == null ||
+            !blockPrefab.HasValidBlockData())
+        {
+            Debug.LogError(
+                "Bird cần Block Prefab, Block Hold Point và danh sách BlockData hợp lệ.",
+                this
+            );
+
+            return;
+        }
+
+        int index = Random.Range(0, blockPrefab.BlockTypeCount);
+
+        BlockController block = Instantiate(
+            blockPrefab,
+            blockHoldPoint.position,
+            blockHoldPoint.rotation
+        );
+
+        block.InitializeServer(index, area, grid, spawner, this);
+        block.NetworkObject.Spawn();
+
+        if (!block.NetworkObject.TrySetParent(NetworkObject, true))
+        {
+            Debug.LogError("Không thể gắn block vào Bird.", this);
+            block.NetworkObject.Despawn();
+            return;
+        }
+
+        carriedBlock = block;
+        Blocktmp = block._blockData;
     }
 
     public override void OnNetworkDespawn()
     {
-        blockIndex.OnValueChanged -= HandleBlockChanged;
+        if (IsServer &&
+            carriedBlock != null &&
+            carriedBlock.IsSpawned)
+        {
+            carriedBlock.NetworkObject.Despawn();
+        }
     }
 
     private void FixedUpdate()
@@ -80,7 +110,8 @@ public class BirdController : NetworkBehaviour
             }
             else
             {
-                birdRigidbody.linearVelocity = Vector2.down * moveSpeed;
+                birdRigidbody.linearVelocity =
+                    Vector2.down * moveSpeed;
             }
         }
 
@@ -96,7 +127,6 @@ public class BirdController : NetworkBehaviour
         }
     }
 
-    // Dùng từ Inspector của Host để kiểm tra vòng sinh Bird.
     [ContextMenu("Test Fly Up")]
     public void FlyUp()
     {
@@ -106,23 +136,5 @@ public class BirdController : NetworkBehaviour
         isFlyingDown = false;
         isFlyingUp = true;
         flyingUpTime = 0f;
-    }
-
-    private void HandleBlockChanged(int previousValue, int newValue)
-    {
-        ApplyBlock(newValue);
-    }
-
-    private void ApplyBlock(int index)
-    {
-        if (blockDataArray == null ||
-            index < 0 ||
-            index >= blockDataArray.Length)
-        {
-            return;
-        }
-
-        Blocktmp = blockDataArray[index];
-        carriedBlockRenderer.sprite = Blocktmp.s;
     }
 }

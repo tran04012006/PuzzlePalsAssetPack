@@ -2,9 +2,26 @@ using System;
 using System.Collections;
 using Unity.VisualScripting;
 using UnityEngine;
-
-public class BlockController : MonoBehaviour
+using Unity.Netcode;
+[RequireComponent(
+    typeof(NetworkObject),
+    typeof(Rigidbody2D),
+    typeof(BoxCollider2D)
+)]
+public class BlockController : NetworkBehaviour
 {
+    
+    [Header("Network Block")]
+    [SerializeField] private BlockData[] blockDataArray;
+
+    private int initialBlockIndex = -1;
+
+    private NetworkVariable<int> blockIndex = new NetworkVariable<int>(
+        -1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+    
     public Rigidbody2D _rigidbody2D;
 
     private BoxCollider2D _boxCollider2D;
@@ -23,25 +40,98 @@ public class BlockController : MonoBehaviour
     public float speed = 4f;
     public bool disappear = false;
     
-    private void OnEnable()
+    
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private void Awake()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _boxCollider2D = GetComponent<BoxCollider2D>();
+        _spriteRenderer = GetComponent<SpriteRenderer>();
+
+        // Block đang được Bird mang sẽ đi theo Transform của Bird.
         _rigidbody2D.bodyType = RigidbodyType2D.Kinematic;
-        _boxCollider2D.isTrigger = true;
+        _rigidbody2D.simulated = false;
+        _boxCollider2D.enabled = false;
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public void InitializeServer(
+        int index,
+        BlockArea area,
+        Grid grid,
+        BirdSpawner spawner,
+        BirdController sourceBird)
     {
-        bird = GetComponentInParent<BirdController>();
-        _blockData = bird.Blocktmp;
+        initialBlockIndex = index;
+
+        _blockArea = area;
+        _grid = grid;
+        birdSpawner = spawner;
+        bird = sourceBird;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        blockIndex.OnValueChanged += HandleBlockChanged;
+
+        if (IsServer)
+        {
+            blockIndex.Value = initialBlockIndex;
+        }
+
+        ApplyBlock(blockIndex.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        blockIndex.OnValueChanged -= HandleBlockChanged;
+    }
+
+    private void HandleBlockChanged(int previousValue, int newValue)
+    {
+        ApplyBlock(newValue);
+    }
+
+    private void ApplyBlock(int index)
+    {
+        if (blockDataArray == null ||
+            index < 0 ||
+            index >= blockDataArray.Length ||
+            blockDataArray[index] == null)
+        {
+            Debug.LogError(
+                $"Block '{name}' có chỉ số hoặc Block Data Array chưa hợp lệ: {index}",
+                this
+            );
+
+            return;
+        }
+
+        _blockData = blockDataArray[index];
+        _spriteRenderer.sprite = _blockData.s;
+    }
+
+    public int BlockTypeCount => blockDataArray.Length;
+
+    public bool HasValidBlockData()
+    {
+        if (blockDataArray == null || blockDataArray.Length == 0)
+            return false;
+
+        foreach (BlockData data in blockDataArray)
+        {
+            if (data == null)
+                return false;
+        }
+
+        return true;
+    }
+    
     // Update is called once per frame
     void Update()
     {
-
+        if (!IsSpawned || !IsServer)
+            return;
         if (isFallingAfterMatch == true)
         {
             if (hasSupportContact &&
