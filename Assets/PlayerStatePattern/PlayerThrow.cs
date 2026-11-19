@@ -2,41 +2,39 @@
 
 public class PlayerThrow : IPlayerStatePattern
 {
-    private BlockyController _blockyController;
-    private float duration = 0.5f;
-    private float time = 0f;
-    
-    public PlayerThrow(BlockyController _blockyController)
+    private readonly BlockyController blockyController;
+
+    private const float Duration = 0.5f;
+    private float elapsedTime;
+
+    public PlayerThrow(BlockyController blockyController)
     {
-        this._blockyController = _blockyController;
+        this.blockyController = blockyController;
     }
-    
+
     public void Enter()
     {
-        _blockyController._animator.SetInteger("Status", 4);
-        time = 0f;
-        BlockController blockController = _blockyController.receiveBlock.GetComponent<BlockController>();
-        blockController.GoDown();
-        _blockyController.receiveBlock = null;
-        //Debug.Log("_blockyController.receiveBlock = " + _blockyController.receiveBlock + "!!!!!!@@@@@@@@@@@@@@@");
+        blockyController._animator.SetInteger("Status", 4);
+        elapsedTime = 0f;
     }
 
     public void Update()
     {
-        time = time + Time.deltaTime;
-        
-        if (duration - time <= 0.2f)
+        if (blockyController.isGameOver)
         {
-            _blockyController.ChangeState(_blockyController._playerIdle);
+            blockyController.ChangeState(blockyController.playerVictory);
+            return;
         }
-        if (_blockyController.isGameOver == true)
+
+        elapsedTime += Time.deltaTime;
+
+        if (elapsedTime >= Duration)
         {
-            _blockyController.ChangeState(_blockyController.playerVictory);
+            blockyController.ChangeState(blockyController._playerIdle);
         }
     }
 
     public void Exit()
     {
-        
     }
 }

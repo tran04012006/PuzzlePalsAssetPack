@@ -63,7 +63,13 @@ public class BlockyController : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
-    
+    private NetworkVariable<uint> throwSequence = new NetworkVariable<uint>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private uint lastThrowSequence;
     [Rpc(SendTo.Server, RequireOwnership = true)]
     private void RequestReceiveBlockRpc(RpcParams rpcParams = default)
     {
@@ -105,7 +111,58 @@ public class BlockyController : NetworkBehaviour
             this
         );
     }
+    public override void OnNetworkSpawn()
+    {
+        lastThrowSequence = throwSequence.Value;
+    }
 
+    public void ThrowBlock()
+    {
+        if (!IsSpawned || !IsOwner || receiveBlock == null)
+            return;
+
+        RequestThrowBlockRpc();
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = true)]
+    private void RequestThrowBlockRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (NetworkManager.ConnectedClientsIds.Count < 2)
+            return;
+
+        if (GameManager.Instance != null &&
+            GameManager.Instance.isGameOver)
+        {
+            return;
+        }
+
+        if (heldBlockId.Value == NoHeldBlock)
+            return;
+
+        if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                heldBlockId.Value,
+                out NetworkObject blockObject))
+        {
+            heldBlockId.Value = NoHeldBlock;
+            return;
+        }
+
+        BlockController block = blockObject.GetComponent<BlockController>();
+
+        if (block == null || block.transform.parent != transform)
+            return;
+
+        if (!block.GoDown())
+            return;
+
+        heldBlockId.Value = NoHeldBlock;
+
+        // Thông báo một lần thả thành công để Owner chạy animation.
+        throwSequence.Value = unchecked(throwSequence.Value + 1);
+    }
     private void RefreshHeldBlock()
     {
         GameObject nextBlock = null;
@@ -131,7 +188,7 @@ public class BlockyController : NetworkBehaviour
         {
             ChangeState(playerReceiveBlockCarryIdle);
         }
-        else if (wasHoldingBlock)
+        else if (wasHoldingBlock && currentState != playerThrow)
         {
             ChangeState(_playerIdle);
         }
@@ -168,11 +225,16 @@ public class BlockyController : NetworkBehaviour
         if (!IsSpawned)
             return;
 
-        // Cả Host và Client cùng cập nhật tham chiếu block đang cầm.
         RefreshHeldBlock();
 
         if (!IsOwner || IsHost != leftArea)
             return;
+
+        if (lastThrowSequence != throwSequence.Value)
+        {
+            lastThrowSequence = throwSequence.Value;
+            ChangeState(playerThrow);
+        }
 
         if (!isGameOver &&
             GameManager.Instance != null &&
@@ -184,6 +246,14 @@ public class BlockyController : NetworkBehaviour
 
         Direction();
         Movement();
+
+        if (Mathf.Approximately(moveY, -1f) &&
+            receiveBlock != null &&
+            currentState != playerThrow)
+        {
+            ThrowBlock();
+        }
+
         currentState.Update();
     }
      
@@ -249,8 +319,13 @@ public class BlockyController : NetworkBehaviour
     
     public void ReceiveBlock()
     {
-        if (!IsSpawned || !IsOwner || receiveBlock != null)
+        if (!IsSpawned ||
+            !IsOwner ||
+            receiveBlock != null ||
+            currentState == playerThrow)
+        {
             return;
+        }
 
         ChangeState(playerReceiveBlocks);
         RequestReceiveBlockRpc();

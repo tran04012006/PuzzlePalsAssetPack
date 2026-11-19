@@ -1,8 +1,6 @@
-using System;
-using System.Collections;
-using Unity.VisualScripting;
-using UnityEngine;
 using Unity.Netcode;
+using UnityEngine;
+
 [RequireComponent(
     typeof(NetworkObject),
     typeof(Rigidbody2D),
@@ -10,49 +8,50 @@ using Unity.Netcode;
 )]
 public class BlockController : NetworkBehaviour
 {
-    
     [Header("Network Block")]
     [SerializeField] private BlockData[] blockDataArray;
 
+    public Rigidbody2D _rigidbody2D;
+    public BlockData _blockData;
+
+    public BirdSpawner birdSpawner;
+    public BirdController bird;
+
+    [Header("Grid")]
+    public Grid _grid;
+    public BlockArea _blockArea;
+
+    public bool isFalling;
+    public bool disappear;
+
+    private BoxCollider2D blockCollider;
+    private SpriteRenderer blockRenderer;
+
     private int initialBlockIndex = -1;
+
+    private bool hasRegisteredPosition;
+    private Vector2Int registeredPosition;
+
+    private readonly ContactPoint2D[] landingContacts =
+        new ContactPoint2D[8];
 
     private NetworkVariable<int> blockIndex = new NetworkVariable<int>(
         -1,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
-    
-    public Rigidbody2D _rigidbody2D;
 
-    private BoxCollider2D _boxCollider2D;
-    
-    public BlockData _blockData;
-    private SpriteRenderer _spriteRenderer;
-    public BirdSpawner birdSpawner;
-    public BirdController bird;
-    public bool isFalling = false;
-    private bool isFallingAfterMatch = false;
-    private bool hasSupportContact;
+    public int BlockTypeCount => blockDataArray.Length;
 
-    [Header("Grid")] 
-    public Grid _grid;
-    public BlockArea _blockArea;
-    public float speed = 4f;
-    public bool disappear = false;
-    
-    
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
         _rigidbody2D = GetComponent<Rigidbody2D>();
-        _boxCollider2D = GetComponent<BoxCollider2D>();
-        _spriteRenderer = GetComponent<SpriteRenderer>();
+        blockCollider = GetComponent<BoxCollider2D>();
+        blockRenderer = GetComponent<SpriteRenderer>();
 
-        // Block đang được Bird mang sẽ đi theo Transform của Bird.
         _rigidbody2D.bodyType = RigidbodyType2D.Kinematic;
         _rigidbody2D.simulated = false;
-        _boxCollider2D.enabled = false;
+        blockCollider.enabled = false;
     }
 
     public void InitializeServer(
@@ -66,6 +65,7 @@ public class BlockController : NetworkBehaviour
 
         _blockArea = area;
         _grid = grid;
+
         birdSpawner = spawner;
         bird = sourceBird;
     }
@@ -85,6 +85,25 @@ public class BlockController : NetworkBehaviour
     public override void OnNetworkDespawn()
     {
         blockIndex.OnValueChanged -= HandleBlockChanged;
+
+        if (IsServer)
+        {
+            UnregisterPosition();
+        }
+    }
+
+    public bool HasValidBlockData()
+    {
+        if (blockDataArray == null || blockDataArray.Length == 0)
+            return false;
+
+        foreach (BlockData data in blockDataArray)
+        {
+            if (data == null)
+                return false;
+        }
+
+        return true;
     }
 
     private void HandleBlockChanged(int previousValue, int newValue)
@@ -100,7 +119,7 @@ public class BlockController : NetworkBehaviour
             blockDataArray[index] == null)
         {
             Debug.LogError(
-                $"Block '{name}' có chỉ số hoặc Block Data Array chưa hợp lệ: {index}",
+                $"Block '{name}' có BlockData chưa hợp lệ: {index}",
                 this
             );
 
@@ -108,197 +127,183 @@ public class BlockController : NetworkBehaviour
         }
 
         _blockData = blockDataArray[index];
-        _spriteRenderer.sprite = _blockData.s;
+        blockRenderer.sprite = _blockData.s;
     }
 
-    public int BlockTypeCount => blockDataArray.Length;
-
-    public bool HasValidBlockData()
+    public bool GoDown()
     {
-        if (blockDataArray == null || blockDataArray.Length == 0)
+        if (!IsSpawned || !IsServer || isFalling)
             return false;
 
-        foreach (BlockData data in blockDataArray)
+        if (_grid == null || _blockArea == null)
         {
-            if (data == null)
-                return false;
+            Debug.LogError(
+                "Block cần được gán Grid và BlockArea từ spawner.",
+                this
+            );
+
+            return false;
+        }
+
+        Transform previousHolder = transform.parent;
+
+        if (!NetworkObject.TryRemoveParent(true))
+            return false;
+
+        BeginFalling();
+
+        // Block thả từ tay sẽ đi xuyên qua collider của người vừa cầm.
+        if (previousHolder != null)
+        {
+            Collider2D[] holderColliders =
+                previousHolder.GetComponentsInChildren<Collider2D>();
+
+            foreach (Collider2D holderCollider in holderColliders)
+            {
+                if (holderCollider != blockCollider)
+                {
+                    Physics2D.IgnoreCollision(
+                        blockCollider,
+                        holderCollider
+                    );
+                }
+            }
         }
 
         return true;
     }
-    
-    // Update is called once per frame
-    void Update()
-    {
-        if (!IsSpawned || !IsServer)
-            return;
-        if (isFallingAfterMatch == true)
-        {
-            if (hasSupportContact &&
-                Mathf.Abs(_rigidbody2D.linearVelocity.y) < 0.1f)
-            {
-                isFallingAfterMatch = false;
-                hasSupportContact = false;
-                PlaceBlock();
-                isFalling = false;
-            }
-            return;
-        }
-        
-        //Debug.Log("_rigidbody2D.linearVelocity.y = " + _rigidbody2D.linearVelocity.y + " !!!!!!!!!!!!!!!!!!");
-        if (isFalling == true && transform.position.y <= 3f 
-                              && Mathf.Approximately(_rigidbody2D.linearVelocity.y, 0)
-            )
-        {
-            Debug.Log("chay PlaceBlock!!!!!!!!!!!!!!!!!!");
-            //_rigidbody2D.bodyType = RigidbodyType2D.Static;
-            PlaceBlock();
-            isFalling = false;
-        }
-    }
 
-    public void GoDown()
+    private void BeginFalling()
     {
-        gameObject.transform.SetParent(null);
+        UnregisterPosition();
+
+        blockCollider.enabled = true;
+        blockCollider.isTrigger = false;
+
         _rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
+        _rigidbody2D.constraints =
+            RigidbodyConstraints2D.FreezePositionX |
+            RigidbodyConstraints2D.FreezeRotation;
+
+        _rigidbody2D.gravityScale = 1f;
+        _rigidbody2D.simulated = true;
+        _rigidbody2D.linearVelocity = Vector2.zero;
+
         isFalling = true;
     }
 
-    private void OnTriggerExit2D(Collider2D other)
+    private void FixedUpdate()
     {
-        if (other.CompareTag("PlayerArea"))
-        {
-            SetTrigger(false);
-        }
-    }
-
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if (isFallingAfterMatch)
+        if (!IsSpawned || !IsServer || disappear)
             return;
-        
-        //xu li truong hop block dua vao phia bien
-        if (other.gameObject.CompareTag("BlockArea"))
-        {
-            //Debug.Log("Time.time: " + Time.time);
-            //Debug.Log("Dung vao BlockArea !!!!!!! @@@@@@@@@@@@@@@");
-            //StartCoroutine(SetTriggerCoroutine());
-            BirdSpawn();
-            return;
-        }
-        
-        else if (other.gameObject.CompareTag("Block"))
-        {
-            //StartCoroutine(SetTriggerCoroutine());
-            BirdSpawn();
-        }
-    }
 
-    void CheckLandingContact(Collision2D other)
-    {
-        foreach (ContactPoint2D contact in other.contacts)
-        {
-            //neu y > 0.5 tuc la phap tuyen huong len, tuc la other o ben duoi
-            //loai bo cac tiep xuc o hai ben vat
-            if (contact.normal.y > 0.5f)
-            {
-                hasSupportContact = true;
-                return;
-            }
-        }
-    }
-    
-    private void OnCollisionEnter2D(Collision2D other)
-    {
-        //neu block nay roi xuong vi bi mat cho do
-        if (isFallingAfterMatch)
-        {
-            CheckLandingContact(other);
-        }
-        else
-        {
-            //neu block nay duoc player tha xuong
-            if (other.gameObject.CompareTag("BlockArea"))
-            {
-                //Debug.Log("Dung vao BlockArea !!!!!!! @@@@@@@@@@@@@@@");
-                BirdSpawn();
-                return;
-            }
-        
-            else if (other.gameObject.CompareTag("Block"))
-            {
-                BirdSpawn();
-            }   
-        }
-        
-    }
-    
-    void BirdSpawn()
-    {
-        birdSpawner.SpawnBird();
-        StartCoroutine(SetTriggerBeforeBeingDestroyed());
-    }
-
-    IEnumerator SetTriggerBeforeBeingDestroyed()
-    {
-        yield return new WaitForSeconds(0.4f);
-        SetTrigger(false);
-    }
-    
-    void SetTrigger(bool newTrigger)
-    {
-        //Debug.Log("chay SetTrigger");
-        _boxCollider2D.isTrigger = newTrigger;
-    }
-
-    void PlaceBlock()
-    {
-        //_rigidbody2D.bodyType = RigidbodyType2D.Static;
-        //_rigidbody2D.linearVelocity = new Vector2(0, -1 * speed);
-        //doi tu world position thanh grid position
-        Vector3Int gridPos = _grid.WorldToCell(transform.position);
-        //Debug.Log("_rigidbody2D.linearVelocity.y = " + _rigidbody2D.linearVelocity.y + " !!!!!!!!!!!!!!!!!!");
-        Debug.Log("gridPos: x = " + gridPos.x + ", y = " + gridPos.y + " !!!!!!!!!");
-        //Debug.Log("goi AddBlock@@@@@@@@@@@@@@@@@@@@@@@@@@@@");
-        while (_blockArea.blockList.ContainsKey((Vector2Int)gridPos))
-        {
-            Debug.Log("da co !!!!!!!!! " + gridPos);
-            _blockArea.blockList.Remove((Vector2Int)gridPos);
-        }
-        _blockArea.AddBlock((Vector2Int)gridPos, this);
-        //Debug.Log("kich thuoc cua blockList: " + _blockArea.blockList.Count);
-    }
-
-    public bool HasBlockBelow(Vector2Int currentPos)
-    {
-        // Block còn được chim giữ thì không rơi
         if (transform.parent != null)
-            return true;
+            return;
 
-        // Block ở hàng đáy
-        if (currentPos.y <= -12)
-            return true;
+        bool hasSupport = HasSupportBelow();
 
-        // Tìm block ngay bên dưới
-        Vector2Int belowPos = currentPos + Vector2Int.down * 2;
-
-        if (_blockArea != null &&
-            _blockArea.blockList.ContainsKey(belowPos))
+        // Block đã đáp nhưng sau đó mất chỗ đỡ hoặc bắt đầu rơi.
+        if (hasRegisteredPosition &&
+            (!hasSupport ||
+             Mathf.Abs(_rigidbody2D.linearVelocity.y) > 0.1f))
         {
-            return true;
+            UnregisterPosition();
+            isFalling = true;
         }
+
+        if (!isFalling || !hasSupport)
+            return;
+
+        if (Mathf.Abs(_rigidbody2D.linearVelocity.y) > 0.1f)
+            return;
+
+        PlaceBlock();
+    }
+
+    private bool HasSupportBelow()
+    {
+        int contactCount = blockCollider.GetContacts(landingContacts);
+
+        for (int i = 0; i < contactCount; i++)
+        {
+            if (landingContacts[i].normal.y > 0.5f)
+                return true;
+        }
+
         return false;
+    }
+
+    private void PlaceBlock()
+    {
+        Vector2Int gridPosition =
+            (Vector2Int)_grid.WorldToCell(transform.position);
+
+        if (_blockArea.blockList.TryGetValue(
+                gridPosition,
+                out BlockController existingBlock) &&
+            existingBlock != null &&
+            existingBlock != this)
+        {
+            Debug.LogError(
+                $"Ô {gridPosition} đã có block khác. " +
+                "Kiểm tra Grid và kích thước block.",
+                this
+            );
+
+            isFalling = false;
+            return;
+        }
+
+        isFalling = false;
+        registeredPosition = gridPosition;
+        hasRegisteredPosition = true;
+
+        _blockArea.AddBlock(gridPosition, this);
+    }
+
+    private void UnregisterPosition()
+    {
+        if (!hasRegisteredPosition || _blockArea == null)
+            return;
+
+        if (_blockArea.blockList.TryGetValue(
+                registeredPosition,
+                out BlockController registeredBlock) &&
+            registeredBlock == this)
+        {
+            _blockArea.blockList.Remove(registeredPosition);
+        }
+
+        hasRegisteredPosition = false;
+    }
+
+    public bool HasBlockBelow(Vector2Int currentPosition)
+    {
+        if (transform.parent != null || currentPosition.y <= -12)
+            return true;
+
+        Vector2Int belowPosition =
+            currentPosition + Vector2Int.down * 2;
+
+        return _blockArea != null &&
+               _blockArea.blockList.TryGetValue(
+                   belowPosition,
+                   out BlockController belowBlock) &&
+               belowBlock != null &&
+               !belowBlock.isFalling &&
+               !belowBlock.disappear;
     }
 
     public void Fall()
     {
-        if (isFalling)
+        if (!IsSpawned ||
+            !IsServer ||
+            isFalling ||
+            transform.parent != null)
+        {
             return;
-        isFallingAfterMatch = true;
-        hasSupportContact = false; //ben duoi co vat do chua
-        _boxCollider2D.isTrigger = false;
-        _rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
-        _rigidbody2D.gravityScale = 1f;
-        isFalling = true;
+        }
+
+        BeginFalling();
     }
 }

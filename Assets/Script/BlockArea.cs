@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using Unity.VisualScripting;
 using UnityEngine;
-
+using Unity.Netcode;
 public class BlockArea : MonoBehaviour
 {
     public Dictionary<Vector2Int, BlockController> blockList = new Dictionary<Vector2Int, BlockController>();
@@ -12,9 +12,14 @@ public class BlockArea : MonoBehaviour
     public bool left = true;
     public ScoreUpdate scoreUpdate;
     private int score = 0;
-    
+        
     public void AddBlock(Vector2Int gridPos, BlockController block)
     {
+        if (NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
         while (blockList.ContainsKey(gridPos))
         {
             Debug.Log("da co !!!!!!!!! " + gridPos);
@@ -65,8 +70,13 @@ public class BlockArea : MonoBehaviour
         if (!blockList.TryGetValue(pos, out BlockController block))
             return false;
         //kiem tra null
-        if (block == null || block._blockData == null)
+        if (block == null ||
+            block._blockData == null ||
+            block.isFalling ||
+            block.disappear)
+        {
             return false;
+        }
         //neu giong target thi tra ve true
         return block._blockData.name == target;
     }
@@ -159,25 +169,45 @@ public class BlockArea : MonoBehaviour
         }
     }
 
-    void RemoveBlock(Dictionary<BlockController, Vector2Int>result)
+    void RemoveBlock(Dictionary<BlockController, Vector2Int> result)
     {
-        //xoa cac block da du > 4 cuc
+        if (NetworkManager.Singleton == null ||
+            !NetworkManager.Singleton.IsServer)
+        {
+            return;
+        }
+
+        // Xóa các ô trước khi kiểm tra block mất chỗ đỡ.
         foreach (var item in result)
         {
-            //Debug.Log("goi " + item.Value);
-            blockList.Remove(item.Value); //xoa khoi blocklist
-            BlockController block = item.Key;
-            GameObject blockMatchedTmp = Instantiate(blockMatched, item.Key.transform.position, Quaternion.identity);
-            block.disappear = true; //danh dau la da bien mat
-            block.GetComponent<Collider2D>().enabled = false; //lam mat collider
-            Destroy(block.gameObject);
-            Destroy(blockMatchedTmp, 0.5f);
             blockList.Remove(item.Value);
         }
+
+        foreach (var item in result)
+        {
+            BlockController block = item.Key;
+
+            if (block == null || !block.IsSpawned)
+                continue;
+
+            if (blockMatched != null)
+            {
+                GameObject effect = Instantiate(
+                    blockMatched,
+                    block.transform.position,
+                    Quaternion.identity
+                );
+
+                Destroy(effect, 0.5f);
+            }
+
+            block.disappear = true;
+            block.GetComponent<Collider2D>().enabled = false;
+            block.NetworkObject.Despawn();
+        }
+
         result.Clear();
-        Debug.Log("clear result. Result = " + result.Count);
-        //kiem tra xem sau khi xoa roi thi ben duoi con block ko
-        CheckUnsupportedBlocks(); //di kiem tra cac block khac, xem co cai nao can roi xuong ko
+        CheckUnsupportedBlocks();
     }
 }
 
