@@ -269,6 +269,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d60f3b19a9396fa48b1cf5847f651d90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockyController
+  ShowTopMostFoldoutHeaderGroup: 1
   _animator: {fileID: 0}
   spriteRenderer: {fileID: 0}
   rigidbody2D: {fileID: 0}
@@ -278,7 +279,7 @@ MonoBehaviour:
   moveSpeed: 5
   cellSize: 2.06
   receiveBlock: {fileID: 0}
-  holdBlockPos: {fileID: 0}
+  holdBlockPos: {fileID: 6739987279153944908}
   leftKey: 276
   rightKey: 275
   receiveKey: 273
@@ -286,6 +287,7 @@ MonoBehaviour:
   isGameOver: 0
   victoryEffect: {fileID: 7833166379794320276, guid: 27abda42744651d4db263538c31450ed, type: 3}
   leftArea: 0
+  receiveDistance: 2
 --- !u!1001 &137774631324615940
 PrefabInstance:
   m_ObjectHideFlags: 0

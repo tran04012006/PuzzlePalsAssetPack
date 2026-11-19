@@ -1,50 +1,49 @@
-﻿using Unity.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class PlayerReceiveBlocksIdle : IPlayerStatePattern
 {
-    private BlockyController _blockyController;
-    private float duration = 0.5f;
-    private float time;
-    
-    public PlayerReceiveBlocksIdle(BlockyController _blockyController)
+    private readonly BlockyController blockyController;
+
+    private const float Duration = 0.5f;
+    private float elapsedTime;
+
+    public PlayerReceiveBlocksIdle(BlockyController blockyController)
     {
-        this._blockyController = _blockyController;
+        this.blockyController = blockyController;
     }
 
     public void Enter()
     {
-        _blockyController._animator.SetInteger("Status", 2);
-        time = 0;
+        blockyController._animator.SetInteger("Status", 2);
+        elapsedTime = 0f;
     }
 
     public void Update()
     {
-        
-        time = time + Time.deltaTime;
-        if (time >= duration)
+        if (blockyController.isGameOver)
         {
-            _blockyController.ChangeState(_blockyController._playerIdle);
-        }
-        
-        if (_blockyController.moveX != 0)
-        {
-            _blockyController.ChangeState(_blockyController.playerReceiveBlockRun);
+            blockyController.ChangeState(blockyController.playerVictory);
+            return;
         }
 
-        if (Mathf.Approximately(_blockyController.moveY, -1))
+        if (blockyController.receiveBlock != null)
         {
-            _blockyController.ChangeState(_blockyController.playerThrow);
+            blockyController.ChangeState(
+                blockyController.playerReceiveBlockCarryIdle
+            );
+
+            return;
         }
-        if (_blockyController.isGameOver == true)
+
+        elapsedTime += Time.deltaTime;
+
+        if (elapsedTime >= Duration)
         {
-            _blockyController.ChangeState(_blockyController.playerVictory);
+            blockyController.ChangeState(blockyController._playerIdle);
         }
     }
 
     public void Exit()
     {
-        
     }
-    
 }

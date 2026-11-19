@@ -52,6 +52,90 @@ public class BlockyController : NetworkBehaviour
     [Header("Effect")] public GameObject victoryEffect;
 
     public bool leftArea = true;
+    
+    [Header("Network Receive")]
+    [SerializeField, Min(0.1f)] private float receiveDistance = 2f;
+
+    private const ulong NoHeldBlock = ulong.MaxValue;
+
+    private NetworkVariable<ulong> heldBlockId = new NetworkVariable<ulong>(
+        NoHeldBlock,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+    
+    [Rpc(SendTo.Server, RequireOwnership = true)]
+    private void RequestReceiveBlockRpc(RpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId)
+            return;
+
+        if (NetworkManager.ConnectedClientsIds.Count < 2)
+            return;
+
+        if (GameManager.Instance != null &&
+            GameManager.Instance.isGameOver)
+        {
+            return;
+        }
+
+        if (heldBlockId.Value != NoHeldBlock)
+            return;
+
+        BirdController[] birds = FindObjectsByType<BirdController>(
+            FindObjectsSortMode.None
+        );
+
+        foreach (BirdController bird in birds)
+        {
+            BlockController block = bird.TryGiveBlockServer(
+                this,
+                receiveDistance
+            );
+
+            if (block == null)
+                continue;
+
+            heldBlockId.Value = block.NetworkObjectId;
+            return;
+        }
+
+        Debug.Log(
+            $"'{name}' chưa nhận được block. Kiểm tra vị trí và khoảng cách nhận.",
+            this
+        );
+    }
+
+    private void RefreshHeldBlock()
+    {
+        GameObject nextBlock = null;
+
+        if (heldBlockId.Value != NoHeldBlock &&
+            NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                heldBlockId.Value,
+                out NetworkObject blockObject))
+        {
+            nextBlock = blockObject.gameObject;
+        }
+
+        if (receiveBlock == nextBlock)
+            return;
+
+        bool wasHoldingBlock = receiveBlock != null;
+        receiveBlock = nextBlock;
+
+        if (!IsOwner)
+            return;
+
+        if (receiveBlock != null)
+        {
+            ChangeState(playerReceiveBlockCarryIdle);
+        }
+        else if (wasHoldingBlock)
+        {
+            ChangeState(_playerIdle);
+        }
+    }
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -72,33 +156,37 @@ public class BlockyController : NetworkBehaviour
         playerVictory = new PlayerVictory(this);
         ChangeState(_playerIdle);
 
-        holdBlockPos = transform.GetChild(0);
+        if (holdBlockPos == null)
+        {
+            holdBlockPos = transform.GetChild(0);
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        if (!IsSpawned || !IsOwner || IsHost != leftArea)
+        if (!IsSpawned)
             return;
-        //Debug.Log("receiveBlock: " + receiveBlock);
-        if (isGameOver == false && GameManager.Instance.isGameOver == true)
+
+        // Cả Host và Client cùng cập nhật tham chiếu block đang cầm.
+        RefreshHeldBlock();
+
+        if (!IsOwner || IsHost != leftArea)
+            return;
+
+        if (!isGameOver &&
+            GameManager.Instance != null &&
+            GameManager.Instance.isGameOver)
         {
             Win();
             isGameOver = true;
         }
+
         Direction();
         Movement();
-        //Debug.Log("currentState: " + currentState);
-        //Debug.Log("moveY: !!!!!!!!!!!!!! " + moveY);
-        //rigidbody2D.linearVelocity = new Vector2(1, 0) * (moveX * moveSpeed);
         currentState.Update();
-        
-        if (receiveBlock != null && currentState == playerReceiveBlockCarryIdle)
-        {
-            ReceiveBlockAction?.Invoke();
-            //BirdController
-        }
     }
+     
 
     public void ChangeState(IPlayerStatePattern newState)
     {
@@ -159,35 +247,13 @@ public class BlockyController : NetworkBehaviour
         }
     }
     
-    private void OnTriggerExit2D(Collider2D other)
-    {
-        if (other.transform.position != holdBlockPos.position 
-            && other.gameObject.CompareTag("Block"))
-        {
-            //Debug.Log("di ra khoi block !!!!!!!!!!!!!!@@@@@@@@@@@@");
-            receiveBlock = null;
-        }  
-    }
-    private void OnTriggerEnter2D(Collider2D other)
-    {
-        if  (other.gameObject.CompareTag("Block"))
-        {
-            //Debug.Log("Dung vao block !!!!!!!!!!!!");
-            receiveBlock = other.gameObject;
-            //Debug.Log("receiveBlock = " + receiveBlock + " !!!!!!@@@@@@@@@@@@@@@");
-        }    
-    }
-
-    
-
     public void ReceiveBlock()
     {
-        if (receiveBlock == null)
-            ChangeState(playerReceiveBlocks);
-        else
-        {
-            ChangeState(playerReceiveBlockCarryIdle);
-        }
+        if (!IsSpawned || !IsOwner || receiveBlock != null)
+            return;
+
+        ChangeState(playerReceiveBlocks);
+        RequestReceiveBlockRpc();
     }
 
     public void Win()

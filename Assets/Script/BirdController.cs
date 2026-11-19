@@ -128,6 +128,40 @@ public class BirdController : NetworkBehaviour
     }
 
     [ContextMenu("Test Fly Up")]
+    public BlockController TryGiveBlockServer(
+        BlockyController player,
+        float receiveDistance)
+    {
+        if (!IsSpawned || !IsServer || isFlyingUp)
+            return null;
+
+        if (carriedBlock == null || !carriedBlock.IsSpawned)
+            return null;
+
+        if (player.leftArea != leftArea)
+            return null;
+
+        Vector2 blockPosition = carriedBlock.transform.position;
+        Vector2 handPosition = player.holdBlockPos.position;
+
+        if (Vector2.Distance(blockPosition, handPosition) > receiveDistance)
+            return null;
+
+        BlockController block = carriedBlock;
+
+        if (!block.NetworkObject.TrySetParent(player.NetworkObject, true))
+            return null;
+
+        block.transform.position = player.holdBlockPos.position;
+
+        // Bird đã bàn giao block nên không còn quản lý block này.
+        carriedBlock = null;
+        Blocktmp = null;
+
+        FlyUp();
+
+        return block;
+    }
     public void FlyUp()
     {
         if (!IsSpawned || !IsServer || isFlyingUp)

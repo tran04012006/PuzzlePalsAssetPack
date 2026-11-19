@@ -31,13 +31,7 @@ public class PlayerWalk : IPlayerStatePattern
         
         if (Mathf.Approximately(_blockyController.moveY, 1))
         {
-            //do tay len
-            if (_blockyController.receiveBlock == null)
-                _blockyController.ChangeState(_blockyController.playerReceiveBlocks);
-            else
-            {
-                _blockyController.ChangeState(_blockyController.playerReceiveBlockCarryIdle);
-            }
+            _blockyController.ReceiveBlock();
         }
         if (_blockyController.isGameOver == true)
         {

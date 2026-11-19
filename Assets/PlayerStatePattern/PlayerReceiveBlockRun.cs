@@ -1,37 +1,40 @@
 ﻿public class PlayerReceiveBlockRun : IPlayerStatePattern
 {
-    private BlockyController _blockyController;
+    private readonly BlockyController blockyController;
 
     public PlayerReceiveBlockRun(BlockyController blockyController)
     {
-        this._blockyController = blockyController;
+        this.blockyController = blockyController;
     }
-    
+
     public void Enter()
     {
-        _blockyController._animator.SetInteger("Status", 3);
+        blockyController._animator.SetInteger("Status", 3);
     }
 
     public void Update()
     {
-        if (_blockyController.receiveBlock != null)
+        if (blockyController.isGameOver)
         {
-            _blockyController.receiveBlock.transform.SetParent(_blockyController.gameObject.transform);
-            _blockyController.receiveBlock.transform.position = _blockyController.holdBlockPos.transform.position;
+            blockyController.ChangeState(blockyController.playerVictory);
+            return;
         }
 
-        if (_blockyController.moveX == 0)
+        if (blockyController.receiveBlock == null)
         {
-            _blockyController.ChangeState(_blockyController.playerReceiveBlockCarryIdle);
+            blockyController.ChangeState(blockyController._playerIdle);
+            return;
         }
-        if (_blockyController.isGameOver == true)
+
+        if (blockyController.moveX == 0)
         {
-            _blockyController.ChangeState(_blockyController.playerVictory);
+            blockyController.ChangeState(
+                blockyController.playerReceiveBlockCarryIdle
+            );
         }
     }
 
     public void Exit()
     {
-        
     }
 }
