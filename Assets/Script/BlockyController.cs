@@ -1,8 +1,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using Unity.Netcode;
 
-public class BlockyController : MonoBehaviour
+public class BlockyController : NetworkBehaviour
 {
     /*
      * status = 0: idle
@@ -77,6 +78,8 @@ public class BlockyController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        if (!IsSpawned || !IsOwner || IsHost != leftArea)
+            return;
         //Debug.Log("receiveBlock: " + receiveBlock);
         if (isGameOver == false && GameManager.Instance.isGameOver == true)
         {

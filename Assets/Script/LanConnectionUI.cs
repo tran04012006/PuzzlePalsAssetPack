@@ -10,7 +10,7 @@ public class LanConnectionUI : MonoBehaviour
 {
     [SerializeField] private TMP_InputField ipInput;
     [SerializeField] private TMP_Text statusText;
-
+    public GameObject connectionUI;
     private const ushort Port = 7777;
 
     private NetworkManager networkManager;
@@ -77,6 +77,8 @@ public class LanConnectionUI : MonoBehaviour
         else if (clientId == networkManager.LocalClientId)
         {
             statusText.text = "Đã kết nối với Host — 2/2 người chơi";
+            Canvas canvas = connectionUI.GetComponent<Canvas>();
+            canvas.sortingOrder = 0;
         }
     }
 
