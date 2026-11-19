@@ -606,6 +606,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6002154786333755155, guid: c45e06bb4150da54497a2db506a8634e, type: 3}
+      propertyPath: m_Text
+      value: 'Score: 0'
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -649,6 +653,10 @@ PrefabInstance:
     - target: {fileID: 1931146499540974910, guid: 8b0d293838ff6cf4e9e7ce1a529068f6, type: 3}
       propertyPath: m_Name
       value: Score right
+      objectReference: {fileID: 0}
+    - target: {fileID: 3659128282376307134, guid: 8b0d293838ff6cf4e9e7ce1a529068f6, type: 3}
+      propertyPath: m_Text
+      value: 'Score: 0'
       objectReference: {fileID: 0}
     - target: {fileID: 6235175862481413530, guid: 8b0d293838ff6cf4e9e7ce1a529068f6, type: 3}
       propertyPath: m_Pivot.x

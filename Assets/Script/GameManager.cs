@@ -45,12 +45,18 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        if (scoreRight >= 4 || scoreLeft >= 4)
+        if (scoreLeft >= 20)
         {
+            leftIsWin = true;
             isGameOver = true;
             return;
         }
-
+        if (scoreRight >= 20)
+        {
+            leftIsWin = false;
+            isGameOver = true;
+            return;
+        }
     }
 
     public void ReachCheckPoint(int checkPoint)

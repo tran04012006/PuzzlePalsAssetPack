@@ -16,6 +16,8 @@ public class PlayerReceiveBlockCarryIdle : IPlayerStatePattern
 
     public void Update()
     {
+        if (_blockyController.receiveBlock == null)
+            return;
         _blockyController.receiveBlock.transform.SetParent(_blockyController.gameObject.transform);
         _blockyController.receiveBlock.transform.position = _blockyController.holdBlockPos.transform.position;
 

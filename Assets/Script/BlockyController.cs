@@ -78,7 +78,7 @@ public class BlockyController : MonoBehaviour
     void Update()
     {
         //Debug.Log("receiveBlock: " + receiveBlock);
-        if (GameManager.Instance.isGameOver == true)
+        if (isGameOver == false && GameManager.Instance.isGameOver == true)
         {
             Win();
             isGameOver = true;
@@ -189,6 +189,7 @@ public class BlockyController : MonoBehaviour
 
     public void Win()
     {
-        Instantiate(victoryEffect, (Vector2)gameObject.transform.position + new Vector2(0, 5), Quaternion.identity);
+        if (leftArea == GameManager.Instance.leftIsWin)
+            Instantiate(victoryEffect, (Vector2)gameObject.transform.position + new Vector2(0, 5), Quaternion.identity);
     }
 }

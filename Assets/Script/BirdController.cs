@@ -97,7 +97,7 @@ public class BirdController : MonoBehaviour
 
     void TakeBlock()
     {
-        currentIndexBlock = Random.Range(0, blockDataArray.Length - 1);
+        currentIndexBlock = Random.Range(0, blockDataArray.Length);
         Blocktmp = blockDataArray[currentIndexBlock];
         SpriteRenderer sp = currentBlock.GetComponent<SpriteRenderer>();
         if (sp != null)

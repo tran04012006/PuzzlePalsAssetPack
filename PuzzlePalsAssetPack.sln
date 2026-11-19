@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{39a00b62-3912-6024-2cdb-f2c469cb7779}"
+EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFXRRuntime", "CFXRRuntime.csproj", "{2569eb56-1c3b-c3e1-d23c-ced94ae0e19e}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFXRDemo", "CFXRDemo.csproj", "{499f42a6-610e-8082-fbd7-7eba4b952526}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CFXREditor", "CFXREditor.csproj", "{d804dbaa-b65a-744d-d2cd-a653ba76fbfd}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Assembly-CSharp", "Assembly-CSharp.csproj", "{39a00b62-3912-6024-2cdb-f2c469cb7779}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KinoBloom.Runtime", "KinoBloom.Runtime.csproj", "{ba84ce93-a72b-ea85-645c-8a90ca0f7480}"
 EndProject
@@ -20,14 +20,14 @@ Global
 		Debug|Any CPU = Debug|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{39a00b62-3912-6024-2cdb-f2c469cb7779}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39a00b62-3912-6024-2cdb-f2c469cb7779}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2569eb56-1c3b-c3e1-d23c-ced94ae0e19e}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2569eb56-1c3b-c3e1-d23c-ced94ae0e19e}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{499f42a6-610e-8082-fbd7-7eba4b952526}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{499f42a6-610e-8082-fbd7-7eba4b952526}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{d804dbaa-b65a-744d-d2cd-a653ba76fbfd}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{d804dbaa-b65a-744d-d2cd-a653ba76fbfd}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{39a00b62-3912-6024-2cdb-f2c469cb7779}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{39a00b62-3912-6024-2cdb-f2c469cb7779}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ba84ce93-a72b-ea85-645c-8a90ca0f7480}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ba84ce93-a72b-ea85-645c-8a90ca0f7480}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{fe6647a6-9f41-9762-2572-6d0ec562e449}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
