@@ -524,6 +524,9 @@
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>D:\Unity project\PuzzlePalsAssetPack\Library\PackageCache\com.unity.collections@05d86f76b771\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>D:\Unity project\PuzzlePalsAssetPack\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="mscorlib">
       <HintPath>D:\unity\6000.4.2f1\Editor\Data\UnityReferenceAssemblies\unity-4.8-api\mscorlib.dll</HintPath>
     </Reference>

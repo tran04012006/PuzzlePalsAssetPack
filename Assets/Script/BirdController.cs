@@ -1,107 +1,128 @@
-using System;
-using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
-using Random = UnityEngine.Random;
 
-public class BirdController : MonoBehaviour
+[RequireComponent(typeof(NetworkObject), typeof(Rigidbody2D))]
+public class BirdController : NetworkBehaviour
 {
-    private Vector2 startPos;
-    private Rigidbody2D _rigidbody2D;
-
     public float distance = 4f;
-
     public float moveSpeed = 4f;
+    public float lifeTime = 4f;
 
-    public GameObject blocky;
-    private bool isFlyingUp = false;
-    private BlockyController blockyController;
-    public float lifeTime = 4f; 
-    
     [Header("Block")]
     public BlockData[] blockDataArray;
-    private int currentIndexBlock;
-    private GameObject currentBlock;
+    public SpriteRenderer carriedBlockRenderer;
+
     public BlockData Blocktmp;
     public bool leftArea = true;
 
-    private void OnEnable()
+    private Rigidbody2D birdRigidbody;
+    private float startY;
+    private float flyingUpTime;
+    private bool isFlyingDown;
+    private bool isFlyingUp;
+
+    private NetworkVariable<int> blockIndex = new NetworkVariable<int>(
+        -1,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
+    private void Awake()
     {
-        if (leftArea == true)
-            blocky = GameObject.FindGameObjectWithTag("Player");
-        else
-        {
-            blocky = GameObject.FindGameObjectWithTag("PlayerRight");
-        }
-        blockyController = blocky.GetComponent<BlockyController>();
-        
-        blockyController.ReceiveBlockAction += FlyUp;
-        
-        currentBlock = transform.GetChild(0).gameObject;
-        TakeBlock();
+        birdRigidbody = GetComponent<Rigidbody2D>();
     }
 
-    private void OnDisable()
+    public override void OnNetworkSpawn()
     {
-        blockyController.ReceiveBlockAction -= FlyUp;
+        blockIndex.OnValueChanged += HandleBlockChanged;
+
+        // Host mô phỏng chuyển động, Client hiển thị vị trí nhận được.
+        birdRigidbody.simulated = IsServer;
+
+        if (IsServer)
+        {
+            if (blockDataArray == null || blockDataArray.Length == 0)
+            {
+                Debug.LogError("Bird chưa được gán Block Data Array.", this);
+                return;
+            }
+
+            blockIndex.Value = Random.Range(0, blockDataArray.Length);
+
+            startY = transform.position.y;
+            isFlyingDown = true;
+        }
+
+        ApplyBlock(blockIndex.Value);
     }
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public override void OnNetworkDespawn()
     {
-        //x: -25,29 -> -6,41
-        //y: 15.56
-        if (leftArea == true)
-        {
-            startPos.x = Random.Range(-25.29f, -6.41f);
-            startPos.y = 15.56f;
-        }
-        else
-        {
-            startPos.x = Random.Range(6f, 24f);
-            startPos.y = 15.56f;
-        }
-
-        transform.position = startPos;
-
-        _rigidbody2D = GetComponent<Rigidbody2D>();
-        //xuat  hien block duoi chan bird
-        
-        //cho chim bay xuong 4f
-        StartCoroutine(MoveDown());
+        blockIndex.OnValueChanged -= HandleBlockChanged;
     }
 
-    // Update is called once per frame
-    void Update()
+    private void FixedUpdate()
     {
-        if (isFlyingUp == true)
+        if (!IsSpawned || !IsServer)
+            return;
+
+        if (isFlyingDown)
         {
-            _rigidbody2D.linearVelocity = new Vector2(0, 1) * moveSpeed;
-            Destroy(gameObject,lifeTime);
+            if (startY - birdRigidbody.position.y >= distance)
+            {
+                birdRigidbody.position = new Vector2(
+                    birdRigidbody.position.x,
+                    startY - distance
+                );
+
+                birdRigidbody.linearVelocity = Vector2.zero;
+                isFlyingDown = false;
+            }
+            else
+            {
+                birdRigidbody.linearVelocity = Vector2.down * moveSpeed;
+            }
+        }
+
+        if (isFlyingUp)
+        {
+            birdRigidbody.linearVelocity = Vector2.up * moveSpeed;
+            flyingUpTime += Time.fixedDeltaTime;
+
+            if (flyingUpTime >= lifeTime)
+            {
+                NetworkObject.Despawn();
+            }
         }
     }
 
-    IEnumerator MoveDown()
+    // Dùng từ Inspector của Host để kiểm tra vòng sinh Bird.
+    [ContextMenu("Test Fly Up")]
+    public void FlyUp()
     {
-        while (startPos.y - transform.position.y < distance)
-        {
-            _rigidbody2D.linearVelocity = new Vector2(0, -1) * moveSpeed;
-            yield return new WaitForSeconds(0.1f);
-        }
-        _rigidbody2D.linearVelocity = Vector2.zero;
-    }
+        if (!IsSpawned || !IsServer || isFlyingUp)
+            return;
 
-    void FlyUp()
-    {
+        isFlyingDown = false;
         isFlyingUp = true;
+        flyingUpTime = 0f;
     }
 
-    void TakeBlock()
+    private void HandleBlockChanged(int previousValue, int newValue)
     {
-        currentIndexBlock = Random.Range(0, blockDataArray.Length);
-        Blocktmp = blockDataArray[currentIndexBlock];
-        SpriteRenderer sp = currentBlock.GetComponent<SpriteRenderer>();
-        if (sp != null)
-            sp.sprite = Blocktmp.s;
+        ApplyBlock(newValue);
     }
-    
+
+    private void ApplyBlock(int index)
+    {
+        if (blockDataArray == null ||
+            index < 0 ||
+            index >= blockDataArray.Length)
+        {
+            return;
+        }
+
+        Blocktmp = blockDataArray[index];
+        carriedBlockRenderer.sprite = Blocktmp.s;
+    }
 }

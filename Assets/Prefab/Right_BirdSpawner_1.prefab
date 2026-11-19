@@ -45,3 +45,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BirdSpawner
   birdPrefab: {fileID: 3523042125622303493, guid: 519853a8bc592364bbb1ecd3dae03e58, type: 3}
+  blockArea: {fileID: 6129933210682521403, guid: 4935e6b4318b0314fab5712aa050a8fd, type: 3}
+  leftArea: 0
+  spawnY: 15.56
+  leftXRange: {x: -25.29, y: -6.41}
+  rightXRange: {x: 6, y: 24}
