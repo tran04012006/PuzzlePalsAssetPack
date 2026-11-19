@@ -1,35 +1,47 @@
-﻿public class PlayerReceiveBlockCarryIdle : IPlayerStatePattern
-{
-    private readonly BlockyController blockyController;
+﻿using UnityEngine;
 
-    public PlayerReceiveBlockCarryIdle(BlockyController blockyController)
+public class PlayerReceiveBlockCarryIdle : IPlayerStatePattern
+{
+    private BlockyController _blockyController;
+
+    public PlayerReceiveBlockCarryIdle(
+        BlockyController blockyController)
     {
-        this.blockyController = blockyController;
+        _blockyController = blockyController;
     }
 
     public void Enter()
     {
-        blockyController._animator.SetInteger("Status", 5);
+        _blockyController._animator.SetInteger("Status", 5);
     }
 
     public void Update()
     {
-        if (blockyController.isGameOver)
-        {
-            blockyController.ChangeState(blockyController.playerVictory);
+        if (_blockyController.receiveBlock == null)
             return;
+
+        _blockyController.HoldBlock();
+
+        if (_blockyController.moveX != 0f)
+        {
+            _blockyController.ChangeState(
+                _blockyController.playerReceiveBlockRun
+            );
         }
 
-        if (blockyController.receiveBlock == null)
+        if (Mathf.Approximately(
+                _blockyController.moveY,
+                -1f))
         {
-            blockyController.ChangeState(blockyController._playerIdle);
-            return;
+            _blockyController.ChangeState(
+                _blockyController.playerThrow
+            );
         }
 
-        if (blockyController.moveX != 0)
+        if (_blockyController.isGameOver)
         {
-            blockyController.ChangeState(
-                blockyController.playerReceiveBlockRun
+            _blockyController.ChangeState(
+                _blockyController.playerVictory
             );
         }
     }

@@ -24,6 +24,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Block
       objectReference: {fileID: 0}
+    - target: {fileID: 7238389100584424491, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 815978000
+      objectReference: {fileID: 0}
     - target: {fileID: 7555181191037384701, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: m_LocalPosition.x
       value: -17.238018

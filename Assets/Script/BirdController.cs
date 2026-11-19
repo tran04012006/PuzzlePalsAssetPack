@@ -1,3 +1,4 @@
+using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -8,35 +9,34 @@ public class BirdController : NetworkBehaviour
     public float moveSpeed = 4f;
     public float lifeTime = 4f;
 
+    public bool leftArea = true;
+    public BlockData Blocktmp;
+
     [Header("Network Block")]
     public BlockController blockPrefab;
     public Transform blockHoldPoint;
 
-    public bool leftArea = true;
-    public BlockData Blocktmp;
-
     private Rigidbody2D birdRigidbody;
     private BlockController carriedBlock;
 
-    private float startY;
-    private float flyingUpTime;
-    private bool isFlyingDown;
+    private Vector2 startPos;
     private bool isFlyingUp;
 
     private void Awake()
     {
         birdRigidbody = GetComponent<Rigidbody2D>();
+        birdRigidbody.simulated = false;
     }
 
     public override void OnNetworkSpawn()
     {
         birdRigidbody.simulated = IsServer;
 
-        if (IsServer)
-        {
-            startY = transform.position.y;
-            isFlyingDown = true;
-        }
+        if (!IsServer)
+            return;
+
+        startPos = transform.position;
+        StartCoroutine(MoveDown());
     }
 
     public void SpawnCarriedBlock(
@@ -52,7 +52,7 @@ public class BirdController : NetworkBehaviour
             !blockPrefab.HasValidBlockData())
         {
             Debug.LogError(
-                "Bird cần Block Prefab, Block Hold Point và danh sách BlockData hợp lệ.",
+                "Gán NetworkBlock, Block Hold Point và BlockData trước khi chạy.",
                 this
             );
 
@@ -72,7 +72,6 @@ public class BirdController : NetworkBehaviour
 
         if (!block.NetworkObject.TrySetParent(NetworkObject, true))
         {
-            Debug.LogError("Không thể gắn block vào Bird.", this);
             block.NetworkObject.Despawn();
             return;
         }
@@ -81,80 +80,64 @@ public class BirdController : NetworkBehaviour
         Blocktmp = block._blockData;
     }
 
-    public override void OnNetworkDespawn()
+    private IEnumerator MoveDown()
     {
-        if (IsServer &&
-            carriedBlock != null &&
-            carriedBlock.IsSpawned)
+        while (!isFlyingUp &&
+               startPos.y - transform.position.y < distance)
         {
-            carriedBlock.NetworkObject.Despawn();
+            birdRigidbody.linearVelocity =
+                Vector2.down * moveSpeed;
+
+            yield return new WaitForSeconds(0.1f);
+        }
+
+        if (!isFlyingUp)
+        {
+            birdRigidbody.linearVelocity = Vector2.zero;
         }
     }
 
-    private void FixedUpdate()
+    private void Update()
     {
-        if (!IsSpawned || !IsServer)
+        if (!IsSpawned || !IsServer || !isFlyingUp)
             return;
 
-        if (isFlyingDown)
-        {
-            if (startY - birdRigidbody.position.y >= distance)
-            {
-                birdRigidbody.position = new Vector2(
-                    birdRigidbody.position.x,
-                    startY - distance
-                );
-
-                birdRigidbody.linearVelocity = Vector2.zero;
-                isFlyingDown = false;
-            }
-            else
-            {
-                birdRigidbody.linearVelocity =
-                    Vector2.down * moveSpeed;
-            }
-        }
-
-        if (isFlyingUp)
-        {
-            birdRigidbody.linearVelocity = Vector2.up * moveSpeed;
-            flyingUpTime += Time.fixedDeltaTime;
-
-            if (flyingUpTime >= lifeTime)
-            {
-                NetworkObject.Despawn();
-            }
-        }
+        birdRigidbody.linearVelocity =
+            Vector2.up * moveSpeed;
     }
 
-    [ContextMenu("Test Fly Up")]
     public BlockController TryGiveBlockServer(
-        BlockyController player,
-        float receiveDistance)
+        BlockyController player)
     {
-        if (!IsSpawned || !IsServer || isFlyingUp)
+        if (!IsSpawned ||
+            !IsServer ||
+            isFlyingUp ||
+            player == null)
+        {
             return null;
+        }
 
         if (carriedBlock == null || !carriedBlock.IsSpawned)
             return null;
 
-        if (player.leftArea != leftArea)
+        if (player.leftArea != leftArea ||
+            player.holdBlockPos == null)
+        {
             return null;
-
-        Vector2 blockPosition = carriedBlock.transform.position;
-        Vector2 handPosition = player.holdBlockPos.position;
-
-        if (Vector2.Distance(blockPosition, handPosition) > receiveDistance)
-            return null;
+        }
 
         BlockController block = carriedBlock;
 
-        if (!block.NetworkObject.TrySetParent(player.NetworkObject, true))
+        if (!block.NetworkObject.TrySetParent(
+                player.NetworkObject,
+                true))
+        {
             return null;
+        }
 
-        block.transform.position = player.holdBlockPos.position;
+        block.transform.position =
+            player.holdBlockPos.position;
 
-        // Bird đã bàn giao block nên không còn quản lý block này.
         carriedBlock = null;
         Blocktmp = null;
 
@@ -162,13 +145,35 @@ public class BirdController : NetworkBehaviour
 
         return block;
     }
+
     public void FlyUp()
     {
         if (!IsSpawned || !IsServer || isFlyingUp)
             return;
 
-        isFlyingDown = false;
         isFlyingUp = true;
-        flyingUpTime = 0f;
+        StartCoroutine(DespawnAfterLifetime());
+    }
+
+    private IEnumerator DespawnAfterLifetime()
+    {
+        yield return new WaitForSeconds(lifeTime);
+
+        if (IsSpawned && IsServer)
+        {
+            NetworkObject.Despawn();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        StopAllCoroutines();
+
+        if (IsServer &&
+            carriedBlock != null &&
+            carriedBlock.IsSpawned)
+        {
+            carriedBlock.NetworkObject.Despawn();
+        }
     }
 }

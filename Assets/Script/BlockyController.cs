@@ -1,35 +1,29 @@
 using System;
-using UnityEngine;
-using UnityEngine.UI;
 using Unity.Netcode;
+using UnityEngine;
 
 public class BlockyController : NetworkBehaviour
 {
-    /*
-     * status = 0: idle
-     * status = 1: walk
-     * status = 2: receive block idle
-     * status = 3: receive block run
-     * status = 4: throw
-     * status = 5: receive block carry idle
-     */
-    [Header("Action")] public Action ReceiveBlockAction;
-    
+    [Header("Action")]
+    public Action ReceiveBlockAction;
+
     [Header("Component")]
     public Animator _animator;
     public SpriteRenderer spriteRenderer;
     public Rigidbody2D rigidbody2D;
-    
-    
+
     [Header("Movement")]
     public bool isRight;
-    public float moveX, moveY;
+    public float moveX;
+    public float moveY;
     public float moveSpeed = 5f;
     public float cellSize;
-    Vector2 direction;
 
-    [Header("PlayerState")] 
+    private Vector2 direction;
+
+    [Header("PlayerState")]
     private IPlayerStatePattern currentState;
+
     public PlayerIdle _playerIdle;
     public PlayerWalk playerWalk;
     public PlayerReceiveBlocksIdle playerReceiveBlocks;
@@ -38,204 +32,71 @@ public class BlockyController : NetworkBehaviour
     public PlayerReceiveBlockCarryIdle playerReceiveBlockCarryIdle;
     public PlayerVictory playerVictory;
 
-    [Header("Receive block")] 
+    [Header("Receive block")]
     public GameObject receiveBlock;
     public Transform holdBlockPos;
-    //public GameObject bird;
-    [Header("Control")] public KeyCode leftKey = KeyCode.A;
+
+    [Header("Control")]
+    public KeyCode leftKey = KeyCode.A;
     public KeyCode rightKey = KeyCode.D;
     public KeyCode receiveKey = KeyCode.W;
     public KeyCode throwKey = KeyCode.S;
 
-    [Header("Victory")] public bool isGameOver = false;
+    [Header("Victory")]
+    public bool isGameOver = false;
 
-    [Header("Effect")] public GameObject victoryEffect;
+    [Header("Effect")]
+    public GameObject victoryEffect;
 
     public bool leftArea = true;
-    
-    [Header("Network Receive")]
-    [SerializeField, Min(0.1f)] private float receiveDistance = 2f;
 
-    private const ulong NoHeldBlock = ulong.MaxValue;
+    private const ulong NoBlock = ulong.MaxValue;
 
-    private NetworkVariable<ulong> heldBlockId = new NetworkVariable<ulong>(
-        NoHeldBlock,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
-    private NetworkVariable<uint> throwSequence = new NetworkVariable<uint>(
-        0,
-        NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Server
-    );
+    private NetworkVariable<ulong> networkReceiveBlockId =
+        new NetworkVariable<ulong>(NoBlock);
 
-    private uint lastThrowSequence;
-    [Rpc(SendTo.Server, RequireOwnership = true)]
-    private void RequestReceiveBlockRpc(RpcParams rpcParams = default)
-    {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
-            return;
+    private BlockController serverHeldBlock;
 
-        if (NetworkManager.ConnectedClientsIds.Count < 2)
-            return;
+    private bool holdRequestPending;
+    private ulong confirmedHeldId = NoBlock;
+    private ulong pendingThrownId = NoBlock;
 
-        if (GameManager.Instance != null &&
-            GameManager.Instance.isGameOver)
-        {
-            return;
-        }
-
-        if (heldBlockId.Value != NoHeldBlock)
-            return;
-
-        BirdController[] birds = FindObjectsByType<BirdController>(
-            FindObjectsSortMode.None
-        );
-
-        foreach (BirdController bird in birds)
-        {
-            BlockController block = bird.TryGiveBlockServer(
-                this,
-                receiveDistance
-            );
-
-            if (block == null)
-                continue;
-
-            heldBlockId.Value = block.NetworkObjectId;
-            return;
-        }
-
-        Debug.Log(
-            $"'{name}' chưa nhận được block. Kiểm tra vị trí và khoảng cách nhận.",
-            this
-        );
-    }
-    public override void OnNetworkSpawn()
-    {
-        lastThrowSequence = throwSequence.Value;
-    }
-
-    public void ThrowBlock()
-    {
-        if (!IsSpawned || !IsOwner || receiveBlock == null)
-            return;
-
-        RequestThrowBlockRpc();
-    }
-
-    [Rpc(SendTo.Server, RequireOwnership = true)]
-    private void RequestThrowBlockRpc(RpcParams rpcParams = default)
-    {
-        if (rpcParams.Receive.SenderClientId != OwnerClientId)
-            return;
-
-        if (NetworkManager.ConnectedClientsIds.Count < 2)
-            return;
-
-        if (GameManager.Instance != null &&
-            GameManager.Instance.isGameOver)
-        {
-            return;
-        }
-
-        if (heldBlockId.Value == NoHeldBlock)
-            return;
-
-        if (!NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
-                heldBlockId.Value,
-                out NetworkObject blockObject))
-        {
-            heldBlockId.Value = NoHeldBlock;
-            return;
-        }
-
-        BlockController block = blockObject.GetComponent<BlockController>();
-
-        if (block == null || block.transform.parent != transform)
-            return;
-
-        if (!block.GoDown())
-            return;
-
-        heldBlockId.Value = NoHeldBlock;
-
-        // Thông báo một lần thả thành công để Owner chạy animation.
-        throwSequence.Value = unchecked(throwSequence.Value + 1);
-    }
-    private void RefreshHeldBlock()
-    {
-        GameObject nextBlock = null;
-
-        if (heldBlockId.Value != NoHeldBlock &&
-            NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
-                heldBlockId.Value,
-                out NetworkObject blockObject))
-        {
-            nextBlock = blockObject.gameObject;
-        }
-
-        if (receiveBlock == nextBlock)
-            return;
-
-        bool wasHoldingBlock = receiveBlock != null;
-        receiveBlock = nextBlock;
-
-        if (!IsOwner)
-            return;
-
-        if (receiveBlock != null)
-        {
-            ChangeState(playerReceiveBlockCarryIdle);
-        }
-        else if (wasHoldingBlock && currentState != playerThrow)
-        {
-            ChangeState(_playerIdle);
-        }
-    }
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    private void Awake()
     {
         _animator = GetComponent<Animator>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         rigidbody2D = GetComponent<Rigidbody2D>();
 
         isRight = true;
-
         receiveBlock = null;
-        
+
         _playerIdle = new PlayerIdle(this);
         playerWalk = new PlayerWalk(this);
         playerReceiveBlocks = new PlayerReceiveBlocksIdle(this);
         playerReceiveBlockRun = new PlayerReceiveBlockRun(this);
         playerThrow = new PlayerThrow(this);
-        playerReceiveBlockCarryIdle = new PlayerReceiveBlockCarryIdle(this);
+
+        playerReceiveBlockCarryIdle =
+            new PlayerReceiveBlockCarryIdle(this);
+
         playerVictory = new PlayerVictory(this);
+
         ChangeState(_playerIdle);
 
-        if (holdBlockPos == null)
+        if (holdBlockPos == null && transform.childCount > 0)
         {
             holdBlockPos = transform.GetChild(0);
         }
     }
 
-    // Update is called once per frame
-    void Update()
+    private void Update()
     {
         if (!IsSpawned)
             return;
 
-        RefreshHeldBlock();
+        RefreshReceiveBlock();
 
-        if (!IsOwner || IsHost != leftArea)
-            return;
-
-        if (lastThrowSequence != throwSequence.Value)
-        {
-            lastThrowSequence = throwSequence.Value;
-            ChangeState(playerThrow);
-        }
-
+        // Hiệu ứng người thắng được hiển thị trên cả hai máy.
         if (!isGameOver &&
             GameManager.Instance != null &&
             GameManager.Instance.isGameOver)
@@ -244,25 +105,66 @@ public class BlockyController : NetworkBehaviour
             isGameOver = true;
         }
 
-        Direction();
-        Movement();
+        if (!IsOwner || IsHost != leftArea)
+            return;
 
-        if (Mathf.Approximately(moveY, -1f) &&
-            receiveBlock != null &&
-            currentState != playerThrow)
+        // ConnectedClientsIds được kiểm tra ở phía server.
+        if (IsServer &&
+            NetworkManager.ConnectedClientsIds.Count < 2)
         {
-            ThrowBlock();
+            return;
         }
 
+        Direction();
+        Movement();
         currentState.Update();
+
+        if (receiveBlock != null &&
+            currentState == playerReceiveBlockCarryIdle)
+        {
+            ReceiveBlockAction?.Invoke();
+        }
     }
-     
+
+    private void LateUpdate()
+    {
+        if (!IsSpawned ||
+            !IsServer ||
+            serverHeldBlock == null)
+        {
+            return;
+        }
+
+        if (!serverHeldBlock.IsSpawned)
+        {
+            serverHeldBlock = null;
+            networkReceiveBlockId.Value = NoBlock;
+            return;
+        }
+
+        if (serverHeldBlock.transform.parent == transform &&
+            holdBlockPos != null)
+        {
+            serverHeldBlock.transform.position =
+                holdBlockPos.position;
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        receiveBlock = null;
+        serverHeldBlock = null;
+
+        holdRequestPending = false;
+        confirmedHeldId = NoBlock;
+        pendingThrownId = NoBlock;
+    }
 
     public void ChangeState(IPlayerStatePattern newState)
     {
         if (currentState == newState)
             return;
-        
+
         currentState?.Exit();
         currentState = newState;
         currentState.Enter();
@@ -271,20 +173,25 @@ public class BlockyController : NetworkBehaviour
     public void Movement()
     {
         if (Input.GetKeyDown(leftKey))
+        {
             direction = Vector2.left;
+        }
 
         if (Input.GetKeyDown(rightKey))
+        {
             direction = Vector2.right;
-        
-        //Debug.Log("Movement!!!!!!!!!!!");
-        transform.position += (Vector3)(direction * cellSize);
+        }
+
+        transform.position +=
+            (Vector3)(direction * cellSize);
+
         direction = Vector2.zero;
     }
 
-    void Direction()
+    private void Direction()
     {
-        //gia tri moveX
         moveX = 0f;
+
         if (Input.GetKeyDown(leftKey))
         {
             moveX = -1f;
@@ -293,47 +200,276 @@ public class BlockyController : NetworkBehaviour
         {
             moveX = 1f;
         }
-        //gia tri moveY
+
         moveY = 0f;
+
         if (Input.GetKeyDown(receiveKey))
         {
             moveY = 1f;
         }
+
         if (Input.GetKeyDown(throwKey))
         {
             moveY = -1f;
         }
-        //quyet dinh sprite
-        if (moveX == 1)
+
+        if (moveX == 1f)
         {
-            //di sang phai
             isRight = true;
             spriteRenderer.flipX = false;
         }
-        if (moveX == -1)
+
+        if (moveX == -1f)
         {
             isRight = false;
             spriteRenderer.flipX = true;
         }
     }
-    
-    public void ReceiveBlock()
+
+    private void OnTriggerEnter2D(Collider2D other)
     {
         if (!IsSpawned ||
-            !IsOwner ||
-            receiveBlock != null ||
-            currentState == playerThrow)
+            !IsServer ||
+            serverHeldBlock != null)
         {
             return;
         }
 
-        ChangeState(playerReceiveBlocks);
-        RequestReceiveBlockRpc();
+        if (!other.CompareTag("Block"))
+            return;
+
+        BlockController block =
+            other.GetComponent<BlockController>();
+
+        if (block == null ||
+            !block.IsSpawned ||
+            block.isFalling)
+        {
+            return;
+        }
+
+        BirdController source =
+            block.GetComponentInParent<BirdController>();
+
+        if (source == null || source.leftArea != leftArea)
+            return;
+
+        networkReceiveBlockId.Value =
+            block.NetworkObjectId;
+
+        RefreshReceiveBlock();
+    }
+
+    private void OnTriggerExit2D(Collider2D other)
+    {
+        if (!IsSpawned ||
+            !IsServer ||
+            serverHeldBlock != null)
+        {
+            return;
+        }
+
+        if (!other.CompareTag("Block") ||
+            holdBlockPos == null)
+        {
+            return;
+        }
+
+        BlockController block =
+            other.GetComponent<BlockController>();
+
+        if (block != null &&
+            block.IsSpawned &&
+            block.NetworkObjectId == networkReceiveBlockId.Value &&
+            other.transform.position != holdBlockPos.position)
+        {
+            networkReceiveBlockId.Value = NoBlock;
+            RefreshReceiveBlock();
+        }
+    }
+
+    private void RefreshReceiveBlock()
+    {
+        ulong id = networkReceiveBlockId.Value;
+
+        if (id != pendingThrownId)
+        {
+            pendingThrownId = NoBlock;
+        }
+
+        if (id != confirmedHeldId)
+        {
+            confirmedHeldId = NoBlock;
+        }
+
+        receiveBlock = null;
+
+        if (id == NoBlock || id == pendingThrownId)
+            return;
+
+        if (NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                id,
+                out NetworkObject blockObject))
+        {
+            receiveBlock = blockObject.gameObject;
+        }
+    }
+
+    public void ReceiveBlock()
+    {
+        if (receiveBlock == null)
+        {
+            ChangeState(playerReceiveBlocks);
+        }
+        else
+        {
+            ChangeState(playerReceiveBlockCarryIdle);
+        }
+    }
+
+    public void HoldBlock()
+    {
+        if (!IsSpawned ||
+            !IsOwner ||
+            receiveBlock == null ||
+            holdRequestPending)
+        {
+            return;
+        }
+
+        NetworkObject blockObject =
+            receiveBlock.GetComponent<NetworkObject>();
+
+        if (blockObject == null ||
+            !blockObject.IsSpawned ||
+            confirmedHeldId == blockObject.NetworkObjectId)
+        {
+            return;
+        }
+
+        holdRequestPending = true;
+        RequestHoldBlockRpc(blockObject.NetworkObjectId);
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = true)]
+    private void RequestHoldBlockRpc(
+        ulong blockId,
+        RpcParams rpcParams = default)
+    {
+        bool success = false;
+
+        if (rpcParams.Receive.SenderClientId == OwnerClientId &&
+            NetworkManager.ConnectedClientsIds.Count >= 2 &&
+            (GameManager.Instance == null ||
+             !GameManager.Instance.isGameOver) &&
+            blockId == networkReceiveBlockId.Value)
+        {
+            if (serverHeldBlock != null &&
+                serverHeldBlock.NetworkObjectId == blockId)
+            {
+                success = true;
+            }
+            else if (
+                NetworkManager.SpawnManager.SpawnedObjects.TryGetValue(
+                    blockId,
+                    out NetworkObject blockObject))
+            {
+                BirdController source =
+                    blockObject.GetComponentInParent<BirdController>();
+
+                if (source != null)
+                {
+                    serverHeldBlock =
+                        source.TryGiveBlockServer(this);
+
+                    success = serverHeldBlock != null;
+                }
+            }
+        }
+
+        HoldResultRpc(blockId, success);
+    }
+
+    [Rpc(SendTo.Owner, RequireOwnership = false)]
+    private void HoldResultRpc(ulong blockId, bool success)
+    {
+        holdRequestPending = false;
+
+        if (success)
+        {
+            confirmedHeldId = blockId;
+        }
+    }
+
+    public void ThrowBlock()
+    {
+        if (!IsSpawned ||
+            !IsOwner ||
+            receiveBlock == null ||
+            pendingThrownId != NoBlock)
+        {
+            return;
+        }
+
+        NetworkObject blockObject =
+            receiveBlock.GetComponent<NetworkObject>();
+
+        if (blockObject == null || !blockObject.IsSpawned)
+            return;
+
+        pendingThrownId = blockObject.NetworkObjectId;
+        receiveBlock = null;
+
+        RequestThrowBlockRpc(pendingThrownId);
+    }
+
+    [Rpc(SendTo.Server, RequireOwnership = true)]
+    private void RequestThrowBlockRpc(
+        ulong blockId,
+        RpcParams rpcParams = default)
+    {
+        bool success = false;
+
+        if (rpcParams.Receive.SenderClientId == OwnerClientId &&
+            NetworkManager.ConnectedClientsIds.Count >= 2 &&
+            (GameManager.Instance == null ||
+             !GameManager.Instance.isGameOver) &&
+            serverHeldBlock != null &&
+            serverHeldBlock.IsSpawned &&
+            serverHeldBlock.NetworkObjectId == blockId &&
+            serverHeldBlock.transform.parent == transform)
+        {
+            success = serverHeldBlock.GoDown();
+
+            if (success)
+            {
+                serverHeldBlock = null;
+                networkReceiveBlockId.Value = NoBlock;
+            }
+        }
+
+        ThrowResultRpc(success);
+    }
+
+    [Rpc(SendTo.Owner, RequireOwnership = false)]
+    private void ThrowResultRpc(bool success)
+    {
+        if (!success)
+        {
+            pendingThrownId = NoBlock;
+        }
     }
 
     public void Win()
     {
-        if (leftArea == GameManager.Instance.leftIsWin)
-            Instantiate(victoryEffect, (Vector2)gameObject.transform.position + new Vector2(0, 5), Quaternion.identity);
+        if (victoryEffect != null &&
+            leftArea == GameManager.Instance.leftIsWin)
+        {
+            Instantiate(
+                victoryEffect,
+                (Vector2)transform.position + new Vector2(0, 5),
+                Quaternion.identity
+            );
+        }
     }
 }

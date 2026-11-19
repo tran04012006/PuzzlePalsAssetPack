@@ -19,55 +19,85 @@ public class BirdSpawner : MonoBehaviour
 
     private NetworkObject currentBird;
 
+    private bool initialBirdSpawned;
+    private bool spawnRequested;
+
+    private bool CanSpawn()
+    {
+        NetworkManager manager = NetworkManager.Singleton;
+
+        return manager != null &&
+               manager.IsListening &&
+               manager.IsServer &&
+               manager.ConnectedClientsIds.Count >= 2 &&
+               (GameManager.Instance == null ||
+                !GameManager.Instance.isGameOver);
+    }
+
     private void Update()
     {
-        SpawnBird();
+        NetworkManager manager = NetworkManager.Singleton;
+
+        if (manager == null || !manager.IsListening)
+        {
+            currentBird = null;
+            initialBirdSpawned = false;
+            spawnRequested = false;
+            return;
+        }
+
+        if (!CanSpawn())
+            return;
+
+        if (!initialBirdSpawned)
+        {
+            spawnRequested = true;
+        }
+
+        if (spawnRequested)
+        {
+            TrySpawnBird();
+        }
     }
 
     public void SpawnBird()
     {
-        NetworkManager manager = NetworkManager.Singleton;
-
-        if (manager == null ||
-            !manager.IsListening ||
-            !manager.IsServer ||
-            manager.ConnectedClientsIds.Count < 2)
-        {
+        if (!CanSpawn())
             return;
-        }
 
-        if (GameManager.Instance != null &&
-            GameManager.Instance.isGameOver)
-        {
-            return;
-        }
+        spawnRequested = true;
+        TrySpawnBird();
+    }
 
+    private void TrySpawnBird()
+    {
         if (currentBird != null && currentBird.IsSpawned)
             return;
 
-        Vector2 xRange = leftArea ? leftXRange : rightXRange;
+        Vector2 range = leftArea ? leftXRange : rightXRange;
 
-        Vector3 spawnPosition = new Vector3(
-            Random.Range(xRange.x, xRange.y),
+        Vector3 position = new Vector3(
+            Random.Range(range.x, range.y),
             spawnY,
             transform.position.z
         );
 
-        GameObject birdInstance = Instantiate(
+        GameObject instance = Instantiate(
             birdPrefab,
-            spawnPosition,
+            position,
             Quaternion.identity
         );
 
-        currentBird = birdInstance.GetComponent<NetworkObject>();
+        currentBird = instance.GetComponent<NetworkObject>();
         currentBird.Spawn();
 
-        BirdController bird = birdInstance.GetComponent<BirdController>();
-
-        bird.SpawnCarriedBlock(
+        instance.GetComponent<BirdController>().SpawnCarriedBlock(
             blockArea,
             grid,
             this
         );
+
+        initialBirdSpawned = true;
+        spawnRequested = false;
     }
 }

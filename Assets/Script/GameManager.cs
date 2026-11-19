@@ -1,40 +1,64 @@
 ﻿using System;
-using System.IO;
-using Unity.VisualScripting.Dependencies.NCalc;
-using Unity.VisualScripting.FullSerializer;
-using UnityEditor;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using UnityEngine.UI;
 
-public class GameManager : MonoBehaviour
+[RequireComponent(typeof(NetworkObject))]
+public class GameManager : NetworkBehaviour
 {
     public static GameManager Instance;
+
     public bool left = true;
     public int scoreLeft;
     public int scoreRight;
 
     public GameObject winEffect;
-    //score: diem player dat duoc
-    public bool isGameOver = false;
-    public bool leftIsWin;
-    private bool scoreAtStart = false;
-    
-    //khai bao action, bao khi diem thay doi
 
-    private BlockyController playerController;
-    
-    void Awake()
+    public bool isGameOver;
+    public bool leftIsWin;
+
+    private struct MatchState :
+        INetworkSerializable,
+        IEquatable<MatchState>
     {
-        Debug.Log("goi awake cua gm");
+        public int leftScore;
+        public int rightScore;
+
+        public bool gameOver;
+        public bool leftWins;
+
+        public void NetworkSerialize<T>(
+            BufferSerializer<T> serializer)
+            where T : IReaderWriter
+        {
+            serializer.SerializeValue(ref leftScore);
+            serializer.SerializeValue(ref rightScore);
+            serializer.SerializeValue(ref gameOver);
+            serializer.SerializeValue(ref leftWins);
+        }
+
+        public bool Equals(MatchState other)
+        {
+            return leftScore == other.leftScore &&
+                   rightScore == other.rightScore &&
+                   gameOver == other.gameOver &&
+                   leftWins == other.leftWins;
+        }
+    }
+
+    private NetworkVariable<MatchState> networkState =
+        new NetworkVariable<MatchState>();
+
+    private void Awake()
+    {
         Instance = this;
+
         scoreLeft = 0;
         scoreRight = 0;
     }
-    
+
     private void OnEnable()
     {
-        Debug.Log("dang ki su kien thay doi score");
         SceneManager.sceneLoaded += onSceneLoad;
     }
 
@@ -43,63 +67,136 @@ public class GameManager : MonoBehaviour
         SceneManager.sceneLoaded -= onSceneLoad;
     }
 
+    public override void OnNetworkSpawn()
+    {
+        networkState.OnValueChanged += OnStateChanged;
+
+        if (IsServer)
+        {
+            PublishState();
+        }
+        else
+        {
+            ApplyState(networkState.Value);
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        networkState.OnValueChanged -= OnStateChanged;
+    }
+
     private void Update()
     {
+        if (!IsSpawned || !IsServer)
+            return;
+
         if (scoreLeft >= 20)
         {
             leftIsWin = true;
             isGameOver = true;
-            return;
         }
-        if (scoreRight >= 20)
+        else if (scoreRight >= 20)
         {
             leftIsWin = false;
             isGameOver = true;
+        }
+
+        PublishState();
+    }
+
+    public void addScore(int score, bool left)
+    {
+        if (!IsSpawned || !IsServer)
+            return;
+
+        if (left)
+        {
+            scoreLeft += score;
+        }
+        else
+        {
+            scoreRight += score;
+        }
+
+        PublishState();
+    }
+
+    private void PublishState()
+    {
+        networkState.Value = new MatchState
+        {
+            leftScore = scoreLeft,
+            rightScore = scoreRight,
+            gameOver = isGameOver,
+            leftWins = leftIsWin
+        };
+    }
+
+    private void OnStateChanged(
+        MatchState previous,
+        MatchState next)
+    {
+        if (!IsServer)
+        {
+            ApplyState(next);
+        }
+    }
+
+    private void ApplyState(MatchState state)
+    {
+        scoreLeft = state.leftScore;
+        scoreRight = state.rightScore;
+        leftIsWin = state.leftWins;
+        isGameOver = state.gameOver;
+    }
+
+    public void PlayBlockMatched(
+        Vector3 position,
+        bool leftArea)
+    {
+        if (IsSpawned && IsServer)
+        {
+            PlayBlockMatchedRpc(position, leftArea);
+        }
+    }
+
+    [Rpc(SendTo.ClientsAndHost, RequireOwnership = false)]
+    private void PlayBlockMatchedRpc(
+        Vector3 position,
+        bool leftArea)
+    {
+        BlockArea[] areas =
+            FindObjectsByType<BlockArea>(
+                FindObjectsSortMode.None
+            );
+
+        foreach (BlockArea area in areas)
+        {
+            if (area.left != leftArea ||
+                area.blockMatched == null)
+            {
+                continue;
+            }
+
+            GameObject effect = Instantiate(
+                area.blockMatched,
+                position,
+                Quaternion.identity
+            );
+
+            Destroy(effect, 0.5f);
             return;
         }
     }
 
     public void ReachCheckPoint(int checkPoint)
     {
-        //SoundManager.Instance.currentSound = SoundManager.SoundID.ReachCheckpoint;
-        //luu lai du lieu
-        //SaveCheckPoint(level[checkPoint], checkPoint, hp, this.score);
-        //chuan bi chuyen sang scene tiep theo
     }
 
-    void onSceneLoad(Scene scene, LoadSceneMode loadSceneMode)
+    private void onSceneLoad(
+        Scene scene,
+        LoadSceneMode loadSceneMode)
     {
-        Debug.Log("onSceneLoad");
     }
-    
-    public void addScore(int score, bool left)
-    {
-        //tang score
-        Debug.Log("cong " + score);
-        if (left == true)
-        {
-            scoreLeft += score;
-            //thong bao diem thay doi
-            Debug.Log("scoreLeft: " + scoreLeft);
-        }
-        else
-        {
-            scoreRight += score;
-            //thong bao diem thay doi
-            Debug.Log("scoreRight: " + scoreRight);
-        }
-        
-    }
-    /*
-    public void minusScore(int score)
-    {
-        this.score -= score;
-        if (this.score <= 0)
-            this.score = 0;
-        onScoreChange?.Invoke(this.score);
-        if (this.score <= 0)
-            gameOver();
-        
-    }
-    */
 }

@@ -2452,6 +2452,22 @@ PrefabInstance:
       propertyPath: m_Name
       value: GameManager
       objectReference: {fileID: 0}
+    - target: {fileID: 8332615060028843417, guid: ce21bbbbb4de2184c8082c7f98f1ade1, type: 3}
+      propertyPath: m_InScenePlaced
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 8332615060028843417, guid: ce21bbbbb4de2184c8082c7f98f1ade1, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 2057435648
+      objectReference: {fileID: 0}
+    - target: {fileID: 8332615060028843417, guid: ce21bbbbb4de2184c8082c7f98f1ade1, type: 3}
+      propertyPath: SceneMigrationSynchronization
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8332615060028843417, guid: ce21bbbbb4de2184c8082c7f98f1ade1, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 756011763
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -66254,6 +66270,10 @@ PrefabInstance:
       value: 28
       objectReference: {fileID: 0}
     - target: {fileID: 9108965353954560984, guid: 32831fc8309b841458f3416d596ff753, type: 3}
+      propertyPath: m_IsTrigger
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9108965353954560984, guid: 32831fc8309b841458f3416d596ff753, type: 3}
       propertyPath: m_CompositePaths.m_Paths.Array.size
       value: 1
       objectReference: {fileID: 0}
@@ -70243,6 +70263,14 @@ PrefabInstance:
       propertyPath: leftArea
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6739987279153944908, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6739987279153944908, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 1.4
+      objectReference: {fileID: 0}
     - target: {fileID: 7764534276151847455, guid: 71639d2ada97ce74e88274cbce6738ab, type: 3}
       propertyPath: m_TagString
       value: PlayerRight
@@ -70508,6 +70536,10 @@ PrefabInstance:
     - target: {fileID: 4557890505993087328, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
       propertyPath: receiveKey
       value: 119
+      objectReference: {fileID: 0}
+    - target: {fileID: 4557890505993087328, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
+      propertyPath: holdBlockPos
+      value: 
       objectReference: {fileID: 0}
     - target: {fileID: 4689968623425988614, guid: eba8c11396af2ad4ba66e8338313e451, type: 3}
       propertyPath: m_Name

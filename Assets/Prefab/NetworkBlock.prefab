@@ -9,8 +9,16 @@ PrefabInstance:
     m_TransformParent: {fileID: 0}
     m_Modifications:
     - target: {fileID: 722715444866600034, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: m_Size.x
+      value: 1.9205003
+      objectReference: {fileID: 0}
+    - target: {fileID: 722715444866600034, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: m_Enabled
       value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 722715444866600034, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: m_Offset.x
+      value: 0.007949948
       objectReference: {fileID: 0}
     - target: {fileID: 2335628284887839144, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: _blockArea
@@ -90,7 +98,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9091334436400787814, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: m_Simulated
-      value: 0
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 9091334436400787814, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
+      propertyPath: m_Constraints
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 9091334436400787814, guid: 84e417c63eb327845ba5046e6e1b0c6b, type: 3}
       propertyPath: m_CollisionDetection

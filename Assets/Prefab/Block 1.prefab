@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 1744975436994909545}
   - component: {fileID: 722715444866600034}
   - component: {fileID: 9091334436400787814}
+  - component: {fileID: 7238389100584424491}
   - component: {fileID: 2335628284887839144}
   m_Layer: 0
   m_Name: Block 1
@@ -167,6 +168,33 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &7238389100584424491
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6908323733513965365}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3665496921
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 0
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 1
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!114 &2335628284887839144
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -179,6 +207,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bdf51320f4547114dbfd3873fa9c843b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BlockController
+  ShowTopMostFoldoutHeaderGroup: 1
+  blockDataArray: []
+  _rigidbody2D: {fileID: 0}
   _blockData: {fileID: 0}
   birdSpawner: {fileID: 780811040013553628, guid: 84dade847fdf97646a7ad83c791429b4, type: 3}
   bird: {fileID: 0}
