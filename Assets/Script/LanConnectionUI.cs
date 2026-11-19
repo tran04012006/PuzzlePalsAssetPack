@@ -69,16 +69,22 @@ public class LanConnectionUI : MonoBehaviour
 
     private void HandleConnected(ulong clientId)
     {
+        //de giao dien hien lai khi mat ket noi
+        connectionUI.SetActive(true);
         if (networkManager.IsHost)
         {
             int playerCount = networkManager.ConnectedClientsIds.Count;
             statusText.text = $"Đã kết nối: {playerCount}/2 người chơi";
+
+            if (playerCount >= 2)
+            {
+                connectionUI.SetActive(false);
+            }
         }
         else if (clientId == networkManager.LocalClientId)
         {
             statusText.text = "Đã kết nối với Host — 2/2 người chơi";
-            Canvas canvas = connectionUI.GetComponent<Canvas>();
-            canvas.sortingOrder = 0;
+            connectionUI.SetActive(false);
         }
     }
 

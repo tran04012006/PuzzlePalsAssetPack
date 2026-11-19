@@ -1382,6 +1382,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: '::'
   ipInput: {fileID: 1083522867}
   statusText: {fileID: 1909174590}
+  connectionUI: {fileID: 2056613846}
 --- !u!114 &1799762752
 MonoBehaviour:
   m_ObjectHideFlags: 0
