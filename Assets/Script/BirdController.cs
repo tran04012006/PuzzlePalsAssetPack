@@ -1,179 +1,107 @@
+using System;
 using System.Collections;
-using Unity.Netcode;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-[RequireComponent(typeof(NetworkObject), typeof(Rigidbody2D))]
-public class BirdController : NetworkBehaviour
+public class BirdController : MonoBehaviour
 {
-    public float distance = 4f;
-    public float moveSpeed = 4f;
-    public float lifeTime = 4f;
-
-    public bool leftArea = true;
-    public BlockData Blocktmp;
-
-    [Header("Network Block")]
-    public BlockController blockPrefab;
-    public Transform blockHoldPoint;
-
-    private Rigidbody2D birdRigidbody;
-    private BlockController carriedBlock;
-
     private Vector2 startPos;
-    private bool isFlyingUp;
+    private Rigidbody2D _rigidbody2D;
 
-    private void Awake()
+    public float distance = 4f;
+
+    public float moveSpeed = 4f;
+
+    public GameObject blocky;
+    private bool isFlyingUp = false;
+    private BlockyController blockyController;
+    public float lifeTime = 4f; 
+    
+    [Header("Block")]
+    public BlockData[] blockDataArray;
+    private int currentIndexBlock;
+    private GameObject currentBlock;
+    public BlockData Blocktmp;
+    public bool leftArea = true;
+
+    private void OnEnable()
     {
-        birdRigidbody = GetComponent<Rigidbody2D>();
-        birdRigidbody.simulated = false;
+        if (leftArea == true)
+            blocky = GameObject.FindGameObjectWithTag("Player");
+        else
+        {
+            blocky = GameObject.FindGameObjectWithTag("PlayerRight");
+        }
+        blockyController = blocky.GetComponent<BlockyController>();
+        
+        blockyController.ReceiveBlockAction += FlyUp;
+        
+        currentBlock = transform.GetChild(0).gameObject;
+        TakeBlock();
     }
 
-    public override void OnNetworkSpawn()
+    private void OnDisable()
     {
-        birdRigidbody.simulated = IsServer;
+        blockyController.ReceiveBlockAction -= FlyUp;
+    }
 
-        if (!IsServer)
-            return;
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        //x: -25,29 -> -6,41
+        //y: 15.56
+        if (leftArea == true)
+        {
+            startPos.x = Random.Range(-25.29f, -6.41f);
+            startPos.y = 15.56f;
+        }
+        else
+        {
+            startPos.x = Random.Range(6f, 24f);
+            startPos.y = 15.56f;
+        }
 
-        startPos = transform.position;
+        transform.position = startPos;
+
+        _rigidbody2D = GetComponent<Rigidbody2D>();
+        //xuat  hien block duoi chan bird
+        
+        //cho chim bay xuong 4f
         StartCoroutine(MoveDown());
     }
 
-    public void SpawnCarriedBlock(
-        BlockArea area,
-        Grid grid,
-        BirdSpawner spawner)
+    // Update is called once per frame
+    void Update()
     {
-        if (!IsSpawned || !IsServer || carriedBlock != null)
-            return;
-
-        if (blockPrefab == null ||
-            blockHoldPoint == null ||
-            !blockPrefab.HasValidBlockData())
+        if (isFlyingUp == true)
         {
-            Debug.LogError(
-                "Gán NetworkBlock, Block Hold Point và BlockData trước khi chạy.",
-                this
-            );
-
-            return;
+            _rigidbody2D.linearVelocity = new Vector2(0, 1) * moveSpeed;
+            Destroy(gameObject,lifeTime);
         }
-
-        int index = Random.Range(0, blockPrefab.BlockTypeCount);
-
-        BlockController block = Instantiate(
-            blockPrefab,
-            blockHoldPoint.position,
-            blockHoldPoint.rotation
-        );
-
-        block.InitializeServer(index, area, grid, spawner, this);
-        block.NetworkObject.Spawn();
-
-        if (!block.NetworkObject.TrySetParent(NetworkObject, true))
-        {
-            block.NetworkObject.Despawn();
-            return;
-        }
-
-        carriedBlock = block;
-        Blocktmp = block._blockData;
     }
 
-    private IEnumerator MoveDown()
+    IEnumerator MoveDown()
     {
-        while (!isFlyingUp &&
-               startPos.y - transform.position.y < distance)
+        while (startPos.y - transform.position.y < distance)
         {
-            birdRigidbody.linearVelocity =
-                Vector2.down * moveSpeed;
-
+            _rigidbody2D.linearVelocity = new Vector2(0, -1) * moveSpeed;
             yield return new WaitForSeconds(0.1f);
         }
-
-        if (!isFlyingUp)
-        {
-            birdRigidbody.linearVelocity = Vector2.zero;
-        }
+        _rigidbody2D.linearVelocity = Vector2.zero;
     }
 
-    private void Update()
+    void FlyUp()
     {
-        if (!IsSpawned || !IsServer || !isFlyingUp)
-            return;
-
-        birdRigidbody.linearVelocity =
-            Vector2.up * moveSpeed;
-    }
-
-    public BlockController TryGiveBlockServer(
-        BlockyController player)
-    {
-        if (!IsSpawned ||
-            !IsServer ||
-            isFlyingUp ||
-            player == null)
-        {
-            return null;
-        }
-
-        if (carriedBlock == null || !carriedBlock.IsSpawned)
-            return null;
-
-        if (player.leftArea != leftArea ||
-            player.holdBlockPos == null)
-        {
-            return null;
-        }
-
-        BlockController block = carriedBlock;
-
-        if (!block.NetworkObject.TrySetParent(
-                player.NetworkObject,
-                true))
-        {
-            return null;
-        }
-
-        block.transform.position =
-            player.holdBlockPos.position;
-
-        carriedBlock = null;
-        Blocktmp = null;
-
-        FlyUp();
-
-        return block;
-    }
-
-    public void FlyUp()
-    {
-        if (!IsSpawned || !IsServer || isFlyingUp)
-            return;
-
         isFlyingUp = true;
-        StartCoroutine(DespawnAfterLifetime());
     }
 
-    private IEnumerator DespawnAfterLifetime()
+    void TakeBlock()
     {
-        yield return new WaitForSeconds(lifeTime);
-
-        if (IsSpawned && IsServer)
-        {
-            NetworkObject.Despawn();
-        }
+        currentIndexBlock = Random.Range(0, blockDataArray.Length);
+        Blocktmp = blockDataArray[currentIndexBlock];
+        SpriteRenderer sp = currentBlock.GetComponent<SpriteRenderer>();
+        if (sp != null)
+            sp.sprite = Blocktmp.s;
     }
-
-    public override void OnNetworkDespawn()
-    {
-        StopAllCoroutines();
-
-        if (IsServer &&
-            carriedBlock != null &&
-            carriedBlock.IsSpawned)
-        {
-            carriedBlock.NetworkObject.Despawn();
-        }
-    }
+    
 }
