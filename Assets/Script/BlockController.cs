@@ -212,6 +212,7 @@ public class BlockController : NetworkBehaviour
         // NETWORK
         if (!IsSpawned || !IsServer)
             return;
+        Debug.Log("Dang chay update cua BlockController");
         if (isFallingAfterMatch == true)
         {
             if (hasSupportContact &&
@@ -224,25 +225,31 @@ public class BlockController : NetworkBehaviour
 
                 isFalling = false;
             }
-
             return;
         }
+        
+        if (transform.position.y > 3f)
+        {
+            Debug.Log("vi tri y cua block > 3: " + transform.position.y);
+        }
 
+        if (isFalling == false)
+        {
+            Debug.Log("isFalling = false");
+        }
+        
         if (isFalling == true &&
             transform.position.y <= 3f &&
             Mathf.Approximately(_rigidbody2D.linearVelocity.y, 0))
         {
             Debug.Log("vi tri y cua block < 3: " + transform.position.y);
-
+            Debug.Log("du dieu kien de placeblock");
             PlaceBlock();
 
             isFalling = false;
         }
 
-        if (transform.position.y > 3f)
-        {
-            //Debug.Log("vi tri y cua block > 3: " + transform.position.y);
-        }
+       
     }
 
     public bool GoDown()

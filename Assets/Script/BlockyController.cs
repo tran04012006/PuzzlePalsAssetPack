@@ -195,10 +195,12 @@ public class BlockyController : NetworkBehaviour
         if (Input.GetKeyDown(leftKey))
         {
             moveX = -1f;
+            SoundManager.Instance.PlayRun();
         }
         else if (Input.GetKeyDown(rightKey))
         {
             moveX = 1f;
+            SoundManager.Instance.PlayRun();
         }
 
         moveY = 0f;
@@ -211,6 +213,7 @@ public class BlockyController : NetworkBehaviour
         if (Input.GetKeyDown(throwKey))
         {
             moveY = -1f;
+            SoundManager.Instance.PlayThrowBlock();
         }
 
         if (moveX == 1f)
@@ -451,56 +454,30 @@ public class BlockyController : NetworkBehaviour
             IsFinitePosition(releasePosition))
         {
             BlockController block = serverHeldBlock;
-            Rigidbody2D body = block._rigidbody2D;
 
-            Vector3 previousPosition =
-                block.transform.position;
+            Vector3 previousPosition = block.transform.position;
 
-            // Host dùng vị trí được gửi cùng yêu cầu thả.
+            // Dùng vị trí tay được gửi cùng yêu cầu thả.
             block.transform.position = releasePosition;
 
-            body.position = new Vector2(
-                releasePosition.x,
-                releasePosition.y
-            );
-
-            // GoDown tách parent, chuyển Dynamic và bật isFalling.
+            // Thả bằng cơ chế cũ:
+            // tách parent, chuyển Dynamic và bật isFalling.
             success = block.GoDown();
 
             if (success)
             {
                 serverHeldBlock = null;
                 networkReceiveBlockId.Value = NoBlock;
-
-                // MỚI: đồng bộ chính xác vị trí sau khi tách parent.
-                NetworkTransform blockTransform =
-                    block.GetComponent<NetworkTransform>();
-
-                if (blockTransform != null)
-                {
-                    // Block đã không còn parent nên local position
-                    // và world position trùng nhau.
-                    blockTransform.Teleport(
-                        block.transform.position,
-                        block.transform.rotation,
-                        block.transform.localScale
-                    );
-                }
             }
             else
             {
-                // Khôi phục nếu GoDown không thành công.
+                // Khôi phục vị trí nếu không thả được.
                 block.transform.position = previousPosition;
-
-                body.position = new Vector2(
-                    previousPosition.x,
-                    previousPosition.y
-                );
             }
         }
 
         ThrowResultRpc(success);
-    }
+    }    
 
     private static bool IsFinitePosition(Vector3 position)
     {
@@ -523,6 +500,7 @@ public class BlockyController : NetworkBehaviour
 
     public void Win()
     {
+        SoundManager.Instance.PlayWin();
         if (victoryEffect != null &&
             leftArea == GameManager.Instance.leftIsWin)
         {

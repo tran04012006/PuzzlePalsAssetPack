@@ -15,7 +15,6 @@ public class PlayerThrow : IPlayerStatePattern
     public void Enter()
     {
         _blockyController._animator.SetInteger("Status", 4);
-
         time = 0f;
         _blockyController.ThrowBlock();
     }

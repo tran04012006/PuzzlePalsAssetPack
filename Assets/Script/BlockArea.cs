@@ -200,7 +200,7 @@ public class BlockArea : MonoBehaviour
         }
 
         result.Clear();
-
+        SoundManager.Instance.PlayBlockExplode();
         Debug.Log("clear result. Result = " + result.Count);
 
         // Giữ nguyên việc kiểm tra block mất chỗ đỡ.
