@@ -1,11 +1,16 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections.Generic;
+
 
 public class BirdSpawner : MonoBehaviour
 {
     public GameObject birdPrefab;
     public BlockArea blockArea;
     public Grid grid;
+    
+    private List<GameObject> birdList = new List<GameObject>();
+    private int maxBird = 1;
 
     [Header("Spawn Position")]
     [SerializeField] private bool leftArea = true;
@@ -64,7 +69,13 @@ public class BirdSpawner : MonoBehaviour
     {
         if (!CanSpawn())
             return;
+        birdList.RemoveAll(item => item == null);
 
+        if (birdList.Count >= maxBird)
+        {
+            return;
+        }
+        
         spawnRequested = true;
         TrySpawnBird();
     }
@@ -81,13 +92,13 @@ public class BirdSpawner : MonoBehaviour
             spawnY,
             transform.position.z
         );
-
+        Debug.Log("de chim");
         GameObject instance = Instantiate(
             birdPrefab,
             position,
             Quaternion.identity
         );
-
+        birdList.Add(instance);
         currentBird = instance.GetComponent<NetworkObject>();
         currentBird.Spawn();
 

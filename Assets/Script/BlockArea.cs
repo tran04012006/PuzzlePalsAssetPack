@@ -13,6 +13,9 @@ public class BlockArea : MonoBehaviour
     public bool left = true;
     public ScoreUpdate scoreUpdate;
 
+    private int score = 0;
+
+    // NETWORK: chỉ Host xử lý bảng block.
     private bool IsServer =>
         NetworkManager.Singleton != null &&
         NetworkManager.Singleton.IsServer;
@@ -21,11 +24,13 @@ public class BlockArea : MonoBehaviour
         Vector2Int gridPos,
         BlockController block)
     {
+        // NETWORK
         if (!IsServer)
             return;
 
         while (blockList.ContainsKey(gridPos))
         {
+            Debug.Log("da co !!!!!!!!! " + gridPos);
             blockList.Remove(gridPos);
         }
 
@@ -34,30 +39,44 @@ public class BlockArea : MonoBehaviour
         CheckMatch(gridPos);
     }
 
-    private void CheckMatch(Vector2Int gridPos)
+    void CheckMatch(Vector2Int gridPos)
     {
+        // Giữ nguyên logic tìm nhóm block của bạn.
+        Debug.Log("bat dau FindConnectedBlock!!!!!!!!!!!");
+
         Dictionary<BlockController, Vector2Int> result =
             FindConnectedBlock(gridPos);
 
+        Debug.Log("----------------------------------------- " + result.Count);
+        Debug.Log("result.Count: !!!!!!!!!!!************* " + result.Count);
+
         if (result.Count >= 4)
         {
+            Debug.Log("Da du 4");
+
             scoreUpdate.UpdateScore(result.Count);
             RemoveBlock(result);
         }
         else
         {
+            Debug.Log("moi co " + result.Count);
+
             result.Clear();
+
+            Debug.Log("clear result. Result = " + result.Count);
         }
     }
 
-    private bool CanVisit(
+    bool CanVisit(
         Vector2Int pos,
         Dictionary<Vector2Int, bool> visited,
         string target)
     {
+        // Vị trí này đã được visit chưa?
         if (visited.ContainsKey(pos))
             return false;
 
+        // Ô này có chứa block không?
         if (!blockList.TryGetValue(
                 pos,
                 out BlockController block))
@@ -65,21 +84,25 @@ public class BlockArea : MonoBehaviour
             return false;
         }
 
+        // Kiểm tra null.
         if (block == null || block._blockData == null)
             return false;
 
+        // Giữ nguyên cách so sánh loại block.
         return block._blockData.name == target;
     }
 
-    private void DFS(
+    void DFS(
         ref Dictionary<Vector2Int, bool> visited,
         Vector2Int startPos,
         ref Dictionary<BlockController, Vector2Int> result,
         string target)
     {
         visited[startPos] = true;
+
         Check(startPos, ref result, target);
 
+        // Trái.
         Vector2Int left =
             startPos + Vector2Int.left * 2;
 
@@ -88,6 +111,7 @@ public class BlockArea : MonoBehaviour
             DFS(ref visited, left, ref result, target);
         }
 
+        // Phải.
         Vector2Int right =
             startPos + Vector2Int.right * 2;
 
@@ -96,6 +120,7 @@ public class BlockArea : MonoBehaviour
             DFS(ref visited, right, ref result, target);
         }
 
+        // Trên.
         Vector2Int up =
             startPos + Vector2Int.up * 2;
 
@@ -104,6 +129,7 @@ public class BlockArea : MonoBehaviour
             DFS(ref visited, up, ref result, target);
         }
 
+        // Dưới.
         Vector2Int down =
             startPos + Vector2Int.down * 2;
 
@@ -113,8 +139,8 @@ public class BlockArea : MonoBehaviour
         }
     }
 
-    private Dictionary<BlockController, Vector2Int>
-        FindConnectedBlock(Vector2Int gridPos)
+    Dictionary<BlockController, Vector2Int> FindConnectedBlock(
+        Vector2Int gridPos)
     {
         visited = new Dictionary<Vector2Int, bool>();
 
@@ -126,14 +152,22 @@ public class BlockArea : MonoBehaviour
         DFS(ref visited, gridPos, ref result, target);
 
         visited.Clear();
+
         return result;
     }
 
-    private void Check(
+    void Check(
         Vector2Int pos,
         ref Dictionary<BlockController, Vector2Int> result,
         string target)
     {
+        Debug.Log("blockList: ");
+
+        foreach (var item in blockList)
+        {
+            // Debug.Log(item);
+        }
+
         BlockData blockData = blockList[pos]._blockData;
 
         if (blockData.name == target)
@@ -142,13 +176,15 @@ public class BlockArea : MonoBehaviour
         }
     }
 
-    private void CheckUnsupportedBlocks()
+    void CheckUnsupportedBlocks()
     {
+        // Giữ nguyên cách duyệt danh sách của bạn.
         var blocks =
             new List<KeyValuePair<Vector2Int, BlockController>>(
                 blockList
             );
 
+        // Giữ nguyên thứ tự sắp xếp hiện tại.
         blocks.Sort((a, b) => a.Key.y.CompareTo(b.Key.y));
 
         foreach (var item in blocks)
@@ -161,40 +197,50 @@ public class BlockArea : MonoBehaviour
 
             if (!block.HasBlockBelow(pos))
             {
+                // Giữ nguyên cách yêu cầu block rơi.
                 block.Fall();
             }
         }
     }
 
-    private void RemoveBlock(
+    void RemoveBlock(
         Dictionary<BlockController, Vector2Int> result)
     {
+        // NETWORK
         if (!IsServer)
             return;
 
         foreach (var item in result)
         {
+            // Giữ nguyên thứ tự xử lý của bạn.
             blockList.Remove(item.Value);
 
             BlockController block = item.Key;
 
-            if (block == null || !block.IsSpawned)
-                continue;
-
+            // NETWORK:
+            // GameManager phát hiệu ứng trên Host và Client.
+            // Hàm này dùng prefab blockMatched của BlockArea
+            // tương ứng trên mỗi máy.
             GameManager.Instance.PlayBlockMatched(
-                block.transform.position,
+                item.Key.transform.position,
                 left
             );
 
             block.disappear = true;
             block.GetComponent<Collider2D>().enabled = false;
 
-            block.NetworkObject.Despawn();
+            // NETWORK:
+            // Thay Destroy(block.gameObject) để đồng bộ việc xóa.
+            block.GetComponent<NetworkObject>().Despawn();
 
             blockList.Remove(item.Value);
         }
 
         result.Clear();
+
+        Debug.Log("clear result. Result = " + result.Count);
+
+        // Giữ nguyên việc kiểm tra block mất chỗ đỡ.
         CheckUnsupportedBlocks();
     }
 }
