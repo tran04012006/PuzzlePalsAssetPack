@@ -285,6 +285,7 @@ MonoBehaviour:
   throwKey: 274
   isGameOver: 0
   victoryEffect: {fileID: 7833166379794320276, guid: 27abda42744651d4db263538c31450ed, type: 3}
+  sweatDrop: {fileID: 4313552145925835586, guid: 661dd5123e3cdb146a63f16b5ad50e1e, type: 3}
   leftArea: 0
 --- !u!1001 &137774631324615940
 PrefabInstance:

@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -50,6 +51,9 @@ public class BlockyController : MonoBehaviour
     [Header("Victory")] public bool isGameOver = false;
 
     [Header("Effect")] public GameObject victoryEffect;
+    public GameObject sweatDrop;
+    private GameObject sweatTmp1, sweatTmp2;
+
 
     public bool leftArea = true;
     // Start is called once before the first execution of Update after the MonoBehaviour is created
@@ -97,6 +101,7 @@ public class BlockyController : MonoBehaviour
             ReceiveBlockAction?.Invoke();
             //BirdController
         }
+        
     }
 
     public void ChangeState(IPlayerStatePattern newState)
@@ -112,14 +117,18 @@ public class BlockyController : MonoBehaviour
     public void Movement()
     {
         if (Input.GetKeyDown(leftKey))
+        {
             direction = Vector2.left;
+        }
 
         if (Input.GetKeyDown(rightKey))
+        {
             direction = Vector2.right;
-        
+        }
         //Debug.Log("Movement!!!!!!!!!!!");
         transform.position += (Vector3)(direction * cellSize);
         direction = Vector2.zero;
+
     }
 
     void Direction()
@@ -165,6 +174,7 @@ public class BlockyController : MonoBehaviour
         {
             //Debug.Log("di ra khoi block !!!!!!!!!!!!!!@@@@@@@@@@@@");
             receiveBlock = null;
+                
         }  
     }
     private void OnTriggerEnter2D(Collider2D other)
@@ -173,12 +183,24 @@ public class BlockyController : MonoBehaviour
         {
             //Debug.Log("Dung vao block !!!!!!!!!!!!");
             receiveBlock = other.gameObject;
-            //Debug.Log("receiveBlock = " + receiveBlock + " !!!!!!@@@@@@@@@@@@@@@");
         }    
     }
 
+    IEnumerator  Sweat()
+    {
+            sweatTmp1 = Instantiate(sweatDrop, (Vector2)gameObject.transform.position + new Vector2(1.3f, 0), Quaternion.identity); 
+            sweatTmp2 = Instantiate(sweatDrop, (Vector2)gameObject.transform.position + new Vector2(-1.3f, 0), Quaternion.identity);
+            SpriteRenderer sweatRender = sweatTmp2.GetComponent<SpriteRenderer>();
+            sweatRender.flipX = false;
+            sweatTmp1.transform.SetParent(this.transform);
+            sweatTmp2.transform.SetParent(this.transform);
+            Destroy(sweatTmp2,0.5f);
+            Destroy(sweatTmp1, 0.5f);
+            yield return new WaitForSeconds(0.6f);
+            if (receiveBlock != null)
+                StartCoroutine(Sweat());
+    }
     
-
     public void ReceiveBlock()
     {
         if (receiveBlock == null)
@@ -186,7 +208,10 @@ public class BlockyController : MonoBehaviour
         else
         {
             ChangeState(playerReceiveBlockCarryIdle);
+            StartCoroutine(Sweat());
+
         }
+        
     }
 
     public void Win()
