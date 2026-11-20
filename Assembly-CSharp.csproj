@@ -60,6 +60,7 @@
     <Compile Include="Assets\PlayerStatePattern\PlayerWalk.cs" />
     <Compile Include="Assets\Script\GameManager.cs" />
     <Compile Include="Assets\PlayerStatePattern\PlayerIdle.cs" />
+    <Compile Include="Assets\PlayerStatePattern\PlayerLose.cs" />
     <Compile Include="Assets\Script\BirdController.cs" />
     <Compile Include="Assets\Script\BirdSpawner.cs" />
     <Compile Include="Assets\PlayerStatePattern\PlayerReceiveBlocks.cs" />

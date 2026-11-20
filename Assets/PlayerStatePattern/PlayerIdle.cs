@@ -29,9 +29,13 @@ public class PlayerIdle : IPlayerStatePattern
             _blockyController.ReceiveBlock();
         }
 
-        if (_blockyController.isGameOver == true)
+        if (_blockyController.isGameOver == true && _blockyController.leftArea == GameManager.Instance.leftIsWin)
         {
             _blockyController.ChangeState(_blockyController.playerVictory);
+        }
+        if (_blockyController.isGameOver == true && _blockyController.leftArea != GameManager.Instance.leftIsWin)
+        {
+            _blockyController.ChangeState(_blockyController.playerLose);
         }
     }
 

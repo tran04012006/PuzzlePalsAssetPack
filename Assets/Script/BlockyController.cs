@@ -36,6 +36,7 @@ public class BlockyController : MonoBehaviour
     public PlayerThrow playerThrow;
     public PlayerReceiveBlockCarryIdle playerReceiveBlockCarryIdle;
     public PlayerVictory playerVictory;
+    public PlayerLose playerLose;
 
     [Header("Receive block")] 
     public GameObject receiveBlock;
@@ -69,6 +70,7 @@ public class BlockyController : MonoBehaviour
         playerThrow = new PlayerThrow(this);
         playerReceiveBlockCarryIdle = new PlayerReceiveBlockCarryIdle(this);
         playerVictory = new PlayerVictory(this);
+        playerLose = new PlayerLose(this);
         ChangeState(_playerIdle);
 
         holdBlockPos = transform.GetChild(0);
