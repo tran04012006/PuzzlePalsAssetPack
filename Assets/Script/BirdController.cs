@@ -128,16 +128,17 @@ public class BirdController : NetworkBehaviour
 
         BlockController block = carriedBlock;
 
+        // Khi đổi parent, BlockController sẽ đặt vị trí tay
+        // trong OnNetworkObjectParentChanged.
         if (!block.NetworkObject.TrySetParent(
                 player.NetworkObject,
                 true))
         {
             return null;
         }
-
-        block.transform.position =
-            player.holdBlockPos.position;
-
+        // Đồng bộ trạng thái chính xác một lần khi nhận.
+        block.SyncHeldPositionServer();
+        Debug.Log("block o vi tri: " + block.transform.position);
         carriedBlock = null;
         Blocktmp = null;
 

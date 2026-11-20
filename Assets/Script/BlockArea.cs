@@ -24,6 +24,7 @@ public class BlockArea : MonoBehaviour
     {
         if (!IsServer)
             return;
+        Debug.Log("chay AddBlock trong BlockArea");
         while (blockList.ContainsKey(gridPos))
         {
             Debug.Log("da co !!!!!!!!! " + gridPos);
@@ -81,7 +82,7 @@ public class BlockArea : MonoBehaviour
     void DFS(ref Dictionary<Vector2Int, bool> visited, Vector2Int startPos, 
         ref Dictionary<BlockController, Vector2Int> result, string target)
     {
-        //Debug.Lo_blockAreag("kiem tra " + startPos);
+        Debug.Log("di tham " + startPos);
         visited[startPos] = true;
         Check(startPos, ref result, target);
         //trai

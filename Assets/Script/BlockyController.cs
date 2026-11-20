@@ -1,5 +1,6 @@
 using System;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class BlockyController : NetworkBehaviour
@@ -96,7 +97,6 @@ public class BlockyController : NetworkBehaviour
 
         RefreshReceiveBlock();
 
-        // Hiệu ứng người thắng được hiển thị trên cả hai máy.
         if (!isGameOver &&
             GameManager.Instance != null &&
             GameManager.Instance.isGameOver)
@@ -108,7 +108,6 @@ public class BlockyController : NetworkBehaviour
         if (!IsOwner || IsHost != leftArea)
             return;
 
-        // ConnectedClientsIds được kiểm tra ở phía server.
         if (IsServer &&
             NetworkManager.ConnectedClientsIds.Count < 2)
         {
@@ -166,6 +165,7 @@ public class BlockyController : NetworkBehaviour
             return;
 
         currentState?.Exit();
+
         currentState = newState;
         currentState.Enter();
     }
@@ -348,6 +348,7 @@ public class BlockyController : NetworkBehaviour
         }
 
         holdRequestPending = true;
+
         RequestHoldBlockRpc(blockObject.NetworkObjectId);
     }
 
@@ -406,6 +407,7 @@ public class BlockyController : NetworkBehaviour
         if (!IsSpawned ||
             !IsOwner ||
             receiveBlock == null ||
+            holdBlockPos == null ||
             pendingThrownId != NoBlock)
         {
             return;
@@ -417,15 +419,23 @@ public class BlockyController : NetworkBehaviour
         if (blockObject == null || !blockObject.IsSpawned)
             return;
 
+        // chụp vị trí tay tại thời điểm bấm S.
+        Vector3 releasePosition = holdBlockPos.position;
+
         pendingThrownId = blockObject.NetworkObjectId;
         receiveBlock = null;
 
-        RequestThrowBlockRpc(pendingThrownId);
+        // gửi ID và vị trí thả trong cùng yêu cầu.
+        RequestThrowBlockRpc(
+            pendingThrownId,
+            releasePosition
+        );
     }
 
     [Rpc(SendTo.Server, RequireOwnership = true)]
     private void RequestThrowBlockRpc(
         ulong blockId,
+        Vector3 releasePosition,
         RpcParams rpcParams = default)
     {
         bool success = false;
@@ -437,18 +447,69 @@ public class BlockyController : NetworkBehaviour
             serverHeldBlock != null &&
             serverHeldBlock.IsSpawned &&
             serverHeldBlock.NetworkObjectId == blockId &&
-            serverHeldBlock.transform.parent == transform)
+            serverHeldBlock.transform.parent == transform &&
+            IsFinitePosition(releasePosition))
         {
-            success = serverHeldBlock.GoDown();
+            BlockController block = serverHeldBlock;
+            Rigidbody2D body = block._rigidbody2D;
+
+            Vector3 previousPosition =
+                block.transform.position;
+
+            // Host dùng vị trí được gửi cùng yêu cầu thả.
+            block.transform.position = releasePosition;
+
+            body.position = new Vector2(
+                releasePosition.x,
+                releasePosition.y
+            );
+
+            // GoDown tách parent, chuyển Dynamic và bật isFalling.
+            success = block.GoDown();
 
             if (success)
             {
                 serverHeldBlock = null;
                 networkReceiveBlockId.Value = NoBlock;
+
+                // MỚI: đồng bộ chính xác vị trí sau khi tách parent.
+                NetworkTransform blockTransform =
+                    block.GetComponent<NetworkTransform>();
+
+                if (blockTransform != null)
+                {
+                    // Block đã không còn parent nên local position
+                    // và world position trùng nhau.
+                    blockTransform.Teleport(
+                        block.transform.position,
+                        block.transform.rotation,
+                        block.transform.localScale
+                    );
+                }
+            }
+            else
+            {
+                // Khôi phục nếu GoDown không thành công.
+                block.transform.position = previousPosition;
+
+                body.position = new Vector2(
+                    previousPosition.x,
+                    previousPosition.y
+                );
             }
         }
 
         ThrowResultRpc(success);
+    }
+
+    private static bool IsFinitePosition(Vector3 position)
+    {
+        return !float.IsNaN(position.x) &&
+               !float.IsInfinity(position.x) &&
+               !float.IsNaN(position.y) &&
+               !float.IsInfinity(position.y) &&
+               !float.IsNaN(position.z) &&
+               !float.IsInfinity(position.z);
     }
 
     [Rpc(SendTo.Owner, RequireOwnership = false)]

@@ -92,7 +92,7 @@ public class BirdSpawner : MonoBehaviour
             spawnY,
             transform.position.z
         );
-        Debug.Log("de chim");
+        //Debug.Log("de chim");
         GameObject instance = Instantiate(
             birdPrefab,
             position,

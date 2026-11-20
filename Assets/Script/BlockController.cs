@@ -1,7 +1,7 @@
 using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
-
+using Unity.Netcode.Components;
 [RequireComponent(
     typeof(NetworkObject),
     typeof(Rigidbody2D),
@@ -30,7 +30,7 @@ public class BlockController : NetworkBehaviour
 
     public float speed = 4f;
     public bool disappear = false;
-
+    private NetworkTransform blockNetworkTransform;
     // NETWORK: danh sách loại block giống nhau trên hai máy.
     [Header("Network Block")]
     [SerializeField] private BlockData[] blockDataArray;
@@ -59,6 +59,64 @@ public class BlockController : NetworkBehaviour
 
         // Giữ Simulated luôn bật.
         _rigidbody2D.simulated = true;
+        blockNetworkTransform = GetComponent<NetworkTransform>();
+    }
+    
+    // đặt vị trí tay ngay trong quá trình đổi parent.
+    public override void OnNetworkObjectParentChanged(
+        NetworkObject parentNetworkObject)
+    {
+        base.OnNetworkObjectParentChanged(parentNetworkObject);
+
+        if (!IsServer || parentNetworkObject == null)
+            return;
+
+        BlockyController player =
+            parentNetworkObject.GetComponent<BlockyController>();
+
+        // Khi parent là Bird thì giữ cách xử lý hiện tại.
+        if (player == null || player.holdBlockPos == null)
+            return;
+
+        // Chuyển vị trí world của tay thành tọa độ
+        // tương đối với GameObject gốc của player.
+        transform.localPosition =
+            player.transform.InverseTransformPoint(
+                player.holdBlockPos.position
+            );
+    }
+        
+    // đồng bộ tức thời một lần sau khi nhận block.
+    public void SyncHeldPositionServer()
+    {
+        if (!IsSpawned || !IsServer)
+            return;
+
+        if (blockNetworkTransform == null)
+        {
+            Debug.LogError(
+                "NetworkBlock cần NetworkTransform.",
+                this
+            );
+
+            return;
+        }
+
+        // Truyền tọa độ đúng theo không gian
+        // mà NetworkTransform đang sử dụng.
+        Vector3 position = blockNetworkTransform.InLocalSpace
+            ? transform.localPosition
+            : transform.position;
+
+        Quaternion rotation = blockNetworkTransform.InLocalSpace
+            ? transform.localRotation
+            : transform.rotation;
+
+        blockNetworkTransform.Teleport(
+            position,
+            rotation,
+            transform.localScale
+        );
     }
 
     // NETWORK:
@@ -154,7 +212,6 @@ public class BlockController : NetworkBehaviour
         // NETWORK
         if (!IsSpawned || !IsServer)
             return;
-
         if (isFallingAfterMatch == true)
         {
             if (hasSupportContact &&
@@ -175,11 +232,16 @@ public class BlockController : NetworkBehaviour
             transform.position.y <= 3f &&
             Mathf.Approximately(_rigidbody2D.linearVelocity.y, 0))
         {
-            Debug.Log("chay PlaceBlock!!!!!!!!!!!!!!!!!!");
+            Debug.Log("vi tri y cua block < 3: " + transform.position.y);
 
             PlaceBlock();
 
             isFalling = false;
+        }
+
+        if (transform.position.y > 3f)
+        {
+            //Debug.Log("vi tri y cua block > 3: " + transform.position.y);
         }
     }
 
@@ -194,7 +256,6 @@ public class BlockController : NetworkBehaviour
         if (!NetworkObject.TryRemoveParent(true))
             return false;
 
-        // Giữ logic thả cũ.
         _rigidbody2D.bodyType = RigidbodyType2D.Dynamic;
         isFalling = true;
 
@@ -294,6 +355,7 @@ public class BlockController : NetworkBehaviour
 
     void PlaceBlock()
     {
+        Debug.Log("chay PlaceBlock!!!!!!!!!!!!!!!!!!");
         Vector3Int gridPos =
             _grid.WorldToCell(transform.position);
 
