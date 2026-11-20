@@ -20,49 +20,41 @@ public class BlockArea : MonoBehaviour
         NetworkManager.Singleton != null &&
         NetworkManager.Singleton.IsServer;
 
-    public void AddBlock(
-        Vector2Int gridPos,
-        BlockController block)
+    public void AddBlock(Vector2Int gridPos, BlockController block)
     {
-        // NETWORK
         if (!IsServer)
             return;
-
         while (blockList.ContainsKey(gridPos))
         {
             Debug.Log("da co !!!!!!!!! " + gridPos);
             blockList.Remove(gridPos);
         }
-
+        //Debug.Log("So luong ptu truoc khi add trong blockList: " + blockList.Count);
         blockList[gridPos] = block;
-
+        //Debug.Log("So luong ptu sau khi add trong blockList: " + blockList.Count);
+        
         CheckMatch(gridPos);
     }
-
     void CheckMatch(Vector2Int gridPos)
     {
-        // Giữ nguyên logic tìm nhóm block của bạn.
+        //tim xem blockName nay co tao ra 4 hang / cot giong nhau ko
         Debug.Log("bat dau FindConnectedBlock!!!!!!!!!!!");
-
-        Dictionary<BlockController, Vector2Int> result =
-            FindConnectedBlock(gridPos);
-
+        Dictionary<BlockController, Vector2Int> result = FindConnectedBlock(gridPos);
         Debug.Log("----------------------------------------- " + result.Count);
-        Debug.Log("result.Count: !!!!!!!!!!!************* " + result.Count);
 
+        Debug.Log("result.Count: !!!!!!!!!!!************* " + result.Count);
+        
         if (result.Count >= 4)
         {
             Debug.Log("Da du 4");
-
             scoreUpdate.UpdateScore(result.Count);
             RemoveBlock(result);
         }
+
         else
         {
             Debug.Log("moi co " + result.Count);
-
             result.Clear();
-
             Debug.Log("clear result. Result = " + result.Count);
         }
     }
@@ -72,66 +64,49 @@ public class BlockArea : MonoBehaviour
         Dictionary<Vector2Int, bool> visited,
         string target)
     {
-        // Vị trí này đã được visit chưa?
+        //vi tri nay da duoc visit chua
         if (visited.ContainsKey(pos))
             return false;
-
-        // Ô này có chứa block không?
-        if (!blockList.TryGetValue(
-                pos,
-                out BlockController block))
-        {
+        //o nay co chua block ko
+        if (!blockList.TryGetValue(pos, out BlockController block))
             return false;
-        }
-
-        // Kiểm tra null.
+        //kiem tra null
         if (block == null || block._blockData == null)
             return false;
-
-        // Giữ nguyên cách so sánh loại block.
+        //neu giong target thi tra ve true
         return block._blockData.name == target;
     }
 
-    void DFS(
-        ref Dictionary<Vector2Int, bool> visited,
-        Vector2Int startPos,
-        ref Dictionary<BlockController, Vector2Int> result,
-        string target)
+
+    void DFS(ref Dictionary<Vector2Int, bool> visited, Vector2Int startPos, 
+        ref Dictionary<BlockController, Vector2Int> result, string target)
     {
+        //Debug.Lo_blockAreag("kiem tra " + startPos);
         visited[startPos] = true;
-
         Check(startPos, ref result, target);
-
-        // Trái.
-        Vector2Int left =
-            startPos + Vector2Int.left * 2;
-
+        //trai
+        Vector2Int left = startPos + Vector2Int.left * 2;
+        
         if (CanVisit(left, visited, target))
         {
             DFS(ref visited, left, ref result, target);
         }
-
-        // Phải.
-        Vector2Int right =
-            startPos + Vector2Int.right * 2;
+        //phai
+        Vector2Int right = startPos + Vector2Int.right * 2;
 
         if (CanVisit(right, visited, target))
         {
             DFS(ref visited, right, ref result, target);
         }
-
-        // Trên.
-        Vector2Int up =
-            startPos + Vector2Int.up * 2;
+        //tren
+        Vector2Int up = startPos + Vector2Int.up * 2;
 
         if (CanVisit(up, visited, target))
         {
             DFS(ref visited, up, ref result, target);
         }
-
-        // Dưới.
-        Vector2Int down =
-            startPos + Vector2Int.down * 2;
+        //duoi
+        Vector2Int down = startPos + Vector2Int.down * 2;
 
         if (CanVisit(down, visited, target))
         {
@@ -139,65 +114,52 @@ public class BlockArea : MonoBehaviour
         }
     }
 
-    Dictionary<BlockController, Vector2Int> FindConnectedBlock(
-        Vector2Int gridPos)
+    Dictionary<BlockController, Vector2Int> FindConnectedBlock(Vector2Int gridPos)
     {
         visited = new Dictionary<Vector2Int, bool>();
-
-        Dictionary<BlockController, Vector2Int> result =
-            new Dictionary<BlockController, Vector2Int>();
+        Dictionary<BlockController, Vector2Int> result = new Dictionary<BlockController, Vector2Int>();
 
         string target = blockList[gridPos]._blockData.name;
-
         DFS(ref visited, gridPos, ref result, target);
-
         visited.Clear();
-
         return result;
     }
 
-    void Check(
-        Vector2Int pos,
-        ref Dictionary<BlockController, Vector2Int> result,
-        string target)
+    void Check(Vector2Int pos, ref Dictionary<BlockController, Vector2Int> result, string target)
     {
         Debug.Log("blockList: ");
-
         foreach (var item in blockList)
         {
-            // Debug.Log(item);
+            //Debug.Log(item);
         }
 
         BlockData blockData = blockList[pos]._blockData;
-
+        
         if (blockData.name == target)
         {
             result[blockList[pos]] = pos;
+            //Debug.Log("them " + pos + " vao result");
         }
     }
 
+
     void CheckUnsupportedBlocks()
     {
-        // Giữ nguyên cách duyệt danh sách của bạn.
-        var blocks =
-            new List<KeyValuePair<Vector2Int, BlockController>>(
-                blockList
-            );
-
-        // Giữ nguyên thứ tự sắp xếp hiện tại.
+        //duyet qua cac phan tu trong blockList
+        var blocks = new List<KeyValuePair<Vector2Int, BlockController>>(blockList);
+        //sap xep theo toa do y giam dan
         blocks.Sort((a, b) => a.Key.y.CompareTo(b.Key.y));
-
         foreach (var item in blocks)
         {
             Vector2Int pos = item.Key;
             BlockController block = item.Value;
-
+            
             if (block == null)
                 continue;
 
             if (!block.HasBlockBelow(pos))
             {
-                // Giữ nguyên cách yêu cầu block rơi.
+                // Cho block rơi
                 block.Fall();
             }
         }

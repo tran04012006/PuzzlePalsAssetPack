@@ -225,13 +225,11 @@ public class BlockController : NetworkBehaviour
         // Giữ cách xử lý block đụng vùng đỡ.
         if (other.gameObject.CompareTag("BlockArea"))
         {
-            Debug.Log("de chim trong OnTriggerEnter2D");
             BirdSpawn();
             return;
         }
         else if (other.gameObject.CompareTag("Block"))
         {
-            Debug.Log("de chim trong OnTriggerEnter2D");
             BirdSpawn();
         }
     }
@@ -265,13 +263,11 @@ public class BlockController : NetworkBehaviour
             // Block được player thả xuống.
             if (other.gameObject.CompareTag("BlockArea"))
             {
-                Debug.Log("de chim trong OnCollisionEnter2D");
                 BirdSpawn();
                 return;
             }
             else if (other.gameObject.CompareTag("Block"))
             {
-                Debug.Log("de chim trong OnCollisionEnter2D");
                 BirdSpawn();
             }
         }
