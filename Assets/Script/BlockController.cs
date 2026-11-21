@@ -212,7 +212,6 @@ public class BlockController : NetworkBehaviour
         // NETWORK
         if (!IsSpawned || !IsServer)
             return;
-        Debug.Log("Dang chay update cua BlockController");
         if (isFallingAfterMatch == true)
         {
             if (hasSupportContact &&
