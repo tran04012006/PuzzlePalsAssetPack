@@ -2020,11 +2020,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bff55a1d5a53452291deddaad8ef292f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SoundManager
-  musicBG: {fileID: 8300000, guid: c2cc4a9ca1361094a9d91a89019ede86, type: 3}
-  run: {fileID: 8300000, guid: 4ccb1eda0b6428245a3f38f637d9dd01, type: 3}
+  musicBG: {fileID: 8300000, guid: 477ee372393a2f648a72efee7835b291, type: 3}
+  run: {fileID: 8300000, guid: de42bec086cdff541bc5d81a8a1155a8, type: 3}
   throwBlock: {fileID: 8300000, guid: 1ca6e0cab7822644b9b3b0dfb0d0d4eb, type: 3}
   win: {fileID: 8300000, guid: 0b4942b20a7cfaa458f83d0d196124e9, type: 3}
   blockExplode: {fileID: 8300000, guid: a5fb86162fdb6fd4985b027dc998bc73, type: 3}
+  receive: {fileID: 8300000, guid: f32254072cd3353468287c00fc506a76, type: 3}
 --- !u!4 &2066356087
 Transform:
   m_ObjectHideFlags: 0
@@ -2148,7 +2149,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: c2cc4a9ca1361094a9d91a89019ede86, type: 3}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 0.29
   m_Pitch: 1

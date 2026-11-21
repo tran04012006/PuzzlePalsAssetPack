@@ -207,6 +207,7 @@ public class BlockyController : NetworkBehaviour
 
         if (Input.GetKeyDown(receiveKey))
         {
+            SoundManager.Instance.PlayReceive();
             moveY = 1f;
         }
 

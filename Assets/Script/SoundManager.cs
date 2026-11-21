@@ -14,6 +14,7 @@ public class SoundManager : MonoBehaviour
     public AudioClip throwBlock;
     public AudioClip win;
     public AudioClip blockExplode;
+    public AudioClip receive;
 
     private bool isRunning = false;
     private bool isGameOver = false;
@@ -28,9 +29,11 @@ public class SoundManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        //su dung 2 audio source khac nhau
+        AudioSource[] sources = GetComponents<AudioSource>();
 
-        musicSource = gameObject.GetComponent<AudioSource>();
-        sfxSource = gameObject.GetComponent<AudioSource>();
+        musicSource = sources[0];
+        sfxSource = sources[1];
     }
 
     private void Start()
@@ -47,6 +50,11 @@ public class SoundManager : MonoBehaviour
     {
         if (!isGameOver)
             sfxSource.PlayOneShot(run);
+    }
+    public void PlayReceive()
+    {
+        if (!isGameOver)
+            sfxSource.PlayOneShot(receive);
     }
     public void PlayThrowBlock()
     {

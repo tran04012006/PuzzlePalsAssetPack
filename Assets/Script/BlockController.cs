@@ -227,19 +227,9 @@ public class BlockController : NetworkBehaviour
             return;
         }
         
-        if (transform.position.y > 3f)
-        {
-            Debug.Log("vi tri y cua block > 3: " + transform.position.y);
-        }
-
-        if (isFalling == false)
-        {
-            Debug.Log("isFalling = false");
-        }
-        
         if (isFalling == true &&
             transform.position.y <= 3f &&
-            Mathf.Approximately(_rigidbody2D.linearVelocity.y, 0))
+            Mathf.Abs(_rigidbody2D.linearVelocity.y) < 0.05f)
         {
             Debug.Log("vi tri y cua block < 3: " + transform.position.y);
             Debug.Log("du dieu kien de placeblock");
